@@ -20,8 +20,8 @@ async function bootstrap() {
     });
 
     const config = new DocumentBuilder()
-      .setTitle('AI-Todo')
-      .setDescription('The AI-Todo API description')
+      .setTitle('TicketProMax')
+      .setDescription('The TicketProMax Ticketing API - Complete event ticketing solution')
       .setVersion('1.0')
       .addBearerAuth()
       .build();
@@ -71,9 +71,10 @@ async function bootstrap() {
 
     const port = process.env.PORT || 3500;
     await app.listen(port);
-    console.log(`🚀 Application is running on: http://localhost:${port}`);
+    console.log(`🚀 TicketProMax API is running on: http://localhost:${port}`);
+    console.log(`📚 API Documentation: http://localhost:${port}/api`);
   } catch (error) {
-    console.error('❌ Failed to start application:', error.message);
+    console.error('❌ Failed to start TicketProMax application:', error.message);
 
     // More specific error handling for database issues
     if (
