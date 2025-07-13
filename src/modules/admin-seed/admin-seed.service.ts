@@ -1,13 +1,13 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { User } from '../user/entities/user.entity';
 import { Model } from 'mongoose';
-import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
-import { User } from './modules/user/entities/user.entity';
-import { UserRole, UserStatus } from './enums/user-role';
+import { UserRole, UserStatus } from '../../enums/user-role';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
-export class AdminSeederService implements OnModuleInit {
+export class AdminSeedService implements OnModuleInit {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private configService: ConfigService,

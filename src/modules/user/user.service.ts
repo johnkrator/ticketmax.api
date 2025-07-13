@@ -230,7 +230,7 @@ export class UserService {
         $inc: { loginAttempts: 1 },
         $set:
           user.loginAttempts >= 4
-            ? { lockUntil: new Date(Date.now() + 30 * 60 * 1000) }
+            ? { lockUntil: new Date(Date.now() + 1 * 60 * 1000) }
             : {},
       },
     );
