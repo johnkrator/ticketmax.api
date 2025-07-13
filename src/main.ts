@@ -3,7 +3,7 @@ import { resolve } from 'path';
 
 dotenv.config({ path: resolve(process.cwd(), '.env') });
 
-// Other modules
+// Other entity_modules
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -21,7 +21,9 @@ async function bootstrap() {
 
     const config = new DocumentBuilder()
       .setTitle('TicketProMax')
-      .setDescription('The TicketProMax Ticketing API - Complete event ticketing solution')
+      .setDescription(
+        'The TicketProMax Ticketing API - Complete event ticketing solution',
+      )
       .setVersion('1.0')
       .addBearerAuth()
       .build();
@@ -74,7 +76,10 @@ async function bootstrap() {
     console.log(`🚀 TicketProMax API is running on: http://localhost:${port}`);
     console.log(`📚 API Documentation: http://localhost:${port}/api`);
   } catch (error) {
-    console.error('❌ Failed to start TicketProMax application:', error.message);
+    console.error(
+      '❌ Failed to start TicketProMax application:',
+      error.message,
+    );
 
     // More specific error handling for database issues
     if (
