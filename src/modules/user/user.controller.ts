@@ -17,8 +17,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password';
 import { UserRole } from '../../enums/user-role';
-import { JwtGuard } from '../../jwt_configuration/jwt-guard';
-import { Roles } from '../../jwt_configuration/roles.decorator';
+import { JwtGuard } from '../../configurations/jwt_configuration/jwt-guard';
+import { Roles } from '../../configurations/jwt_configuration/roles.decorator';
 
 @Controller('user')
 export class UserController {

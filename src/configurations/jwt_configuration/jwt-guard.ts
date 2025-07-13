@@ -8,7 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { UserRole, UserStatus } from '../enums/user-role';
+import { UserRole, UserStatus } from '../../enums/user-role';
 
 @Injectable()
 export class JwtGuard implements CanActivate {

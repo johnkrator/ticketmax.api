@@ -15,7 +15,7 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserRole, UserStatus } from '../../enums/user-role';
-import { JwtConfigService } from '../../jwt_configuration/jwt.config.service';
+import { JwtConfigService } from '../../configurations/jwt_configuration/jwt.config.service';
 import { ResetPasswordDto } from './dto/reset-password';
 
 @Injectable()

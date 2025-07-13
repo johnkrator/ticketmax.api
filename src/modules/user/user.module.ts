@@ -3,7 +3,7 @@ import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './entities/user.entity';
-import { JwtConfigService } from '../../jwt_configuration/jwt.config.service';
+import { JwtConfigService } from '../../configurations/jwt_configuration/jwt.config.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { async } from 'rxjs';

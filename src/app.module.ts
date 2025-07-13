@@ -3,9 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from './entity_modules/user/user.module';
-import { EventModule } from './entity_modules/event/event.module';
-import { mongooseAsyncConfig } from './database-config/datasource.config';
+import { UserModule } from './modules/user/user.module';
+import { EventModule } from './modules/event/event.module';
+import { mongooseAsyncConfig } from './configurations/database-config/datasource.config';
 
 @Module({
   imports: [
