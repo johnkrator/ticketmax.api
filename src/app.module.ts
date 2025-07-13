@@ -7,6 +7,9 @@ import { UserModule } from './modules/user/user.module';
 import { EventModule } from './modules/event/event.module';
 import { mongooseAsyncConfig } from './configurations/database-config/datasource.config';
 import { AdminSeedModule } from './modules/admin-seed/admin-seed.module';
+import { EmailSendModule } from './middleware/email-send/email-send.module';
+import { SmsSendModule } from './middleware/sms-send/sms-send.module';
+import { NotificationModule } from './middleware/notification/notification.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { AdminSeedModule } from './modules/admin-seed/admin-seed.module';
     UserModule,
     EventModule,
     AdminSeedModule,
+    EmailSendModule,
+    SmsSendModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

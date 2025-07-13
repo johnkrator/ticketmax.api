@@ -17,12 +17,16 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserRole, UserStatus } from '../../enums/user-role';
 import { JwtConfigService } from '../../configurations/jwt_configuration/jwt.config.service';
 import { ResetPasswordDto } from './dto/reset-password';
+import { EmailSendService } from '../../middleware/email-send/email-send.service';
+import { SmsSendService } from '../../middleware/sms-send/sms-send.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private jwtConfigService: JwtConfigService,
+    private emailService: EmailSendService,
+    private smsService: SmsSendService,
   ) {}
 
   async register(createUserDto: CreateUserDto) {
@@ -46,7 +50,12 @@ export class UserService {
 
     const savedUser = await user.save();
 
-    // TODO: Send verification email with emailVerificationToken
+    // Send verification email
+    await this.emailService.sendVerificationEmail(
+      savedUser.email,
+      emailVerificationToken,
+      savedUser.firstName,
+    );
 
     return {
       message: 'User registered successfully. Please verify your email.',
@@ -138,7 +147,12 @@ export class UserService {
     user.passwordResetExpires = resetExpires;
     await user.save();
 
-    // TODO: Send password reset email with resetToken
+    // Send reset password email
+    await this.emailService.sendPasswordResetEmail(
+      user.email,
+      resetToken,
+      user.firstName,
+    );
 
     return { message: 'If the email exists, a reset link has been sent' };
   }

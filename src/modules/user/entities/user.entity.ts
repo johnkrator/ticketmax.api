@@ -123,9 +123,13 @@ UserSchema.virtual('isLocked').get(function () {
   return !!(this.lockUntil && this.lockUntil > new Date());
 });
 
-// Index for performance
-UserSchema.index({ email: 1 });
-UserSchema.index({ phone: 1 });
+// Only add indexes that aren't already unique in @Prop
+// email and phone already have unique: true, so no need to index again
 UserSchema.index({ role: 1 });
 UserSchema.index({ status: 1 });
 UserSchema.index({ createdAt: -1 });
+
+// Compound indexes for better query performance
+UserSchema.index({ role: 1, status: 1 });
+UserSchema.index({ emailVerified: 1, phoneVerified: 1 });
+UserSchema.index({ lastLogin: -1 });

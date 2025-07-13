@@ -7,6 +7,7 @@ import { JwtConfigService } from '../../configurations/jwt_configuration/jwt.con
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { async } from 'rxjs';
+import { NotificationModule } from '../../middleware/notification/notification.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { async } from 'rxjs';
       }),
       inject: [ConfigService],
     }),
+    NotificationModule,
     ConfigModule,
   ],
   controllers: [UserController],
