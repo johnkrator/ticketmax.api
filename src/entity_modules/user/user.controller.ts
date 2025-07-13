@@ -16,7 +16,9 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password';
-import { JwtConfigService } from '../../jwt_configuration/jwt.config.service';
+import { UserRole } from '../../enums/user-role';
+import { JwtGuard } from '../../jwt_configuration/jwt-guard';
+import { Roles } from '../../jwt_configuration/roles.decorator';
 
 @Controller('user')
 export class UserController {
@@ -48,31 +50,33 @@ export class UserController {
   }
 
   @Post('change-password')
-  @UseGuards(JwtConfigService)
+  @UseGuards(JwtGuard)
   changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
     return this.userService.changePassword(req.user.sub, changePasswordDto);
   }
 
   @Get()
-  @UseGuards(JwtConfigService)
+  @UseGuards(JwtGuard)
+  @Roles(UserRole.ADMIN)
   findAll() {
     return this.userService.findAll();
   }
 
   @Get(':id')
-  @UseGuards(JwtConfigService)
+  @UseGuards(JwtGuard)
   findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
   }
 
   @Patch(':id')
-  @UseGuards(JwtConfigService)
+  @UseGuards(JwtGuard)
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  @UseGuards(JwtConfigService)
+  @UseGuards(JwtGuard)
+  @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.userService.remove(id);
   }
