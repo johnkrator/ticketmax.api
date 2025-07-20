@@ -38,11 +38,17 @@ export class User extends BaseEntity {
   @ApiProperty({ description: 'User bio', required: false })
   bio?: string;
 
-  @Prop({ enum: UserRole, default: UserRole.USER })
+  @Prop({
+    enum: Object.values(UserRole),
+    default: UserRole.USER,
+  })
   @ApiProperty({ enum: UserRole, description: 'User role' })
   role: UserRole;
 
-  @Prop({ enum: UserStatus, default: UserStatus.ACTIVE })
+  @Prop({
+    enum: Object.values(UserStatus),
+    default: UserStatus.ACTIVE,
+  })
   @ApiProperty({ enum: UserStatus, description: 'User status' })
   status: UserStatus;
 
@@ -124,7 +130,7 @@ UserSchema.virtual('isLocked').get(function () {
 });
 
 // Only add indexes that aren't already unique in @Prop
-// email and phone already have unique: true, so no need to index again
+// Removed _id index as it's not allowed by MongoDB
 UserSchema.index({ role: 1 });
 UserSchema.index({ status: 1 });
 UserSchema.index({ createdAt: -1 });

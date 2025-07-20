@@ -7,7 +7,6 @@ export abstract class BaseEntity {
     type: String,
     default: uuidv4,
     required: true,
-    unique: true
   })
   @ApiProperty({ description: 'Entity ID' })
   _id: string;

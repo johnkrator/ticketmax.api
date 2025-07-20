@@ -24,26 +24,44 @@ export class AdminSeedService implements OnModuleInit {
     );
     const adminPassword = this.configService.get('ADMIN_PASSWORD', 'Admin123!');
 
-    const existingAdmin = await this.userModel.findOne({
+    // Check if any user with this email exists (regardless of role)
+    const existingUser = await this.userModel.findOne({
       email: adminEmail,
-      role: UserRole.ADMIN,
     });
 
-    if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash(adminPassword, 12);
+    if (!existingUser) {
+      try {
+        const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
-      const adminUser = new this.userModel({
-        firstName: 'System',
-        lastName: 'Administrator',
-        email: adminEmail,
-        password: hashedPassword,
-        role: UserRole.ADMIN,
-        status: UserStatus.ACTIVE,
-        emailVerified: true,
-      });
+        const adminUser = new this.userModel({
+          firstName: 'System',
+          lastName: 'Administrator',
+          email: adminEmail,
+          password: hashedPassword,
+          role: UserRole.ADMIN,
+          status: UserStatus.ACTIVE,
+          emailVerified: true,
+        });
 
-      await adminUser.save();
-      console.log('Admin user seeded successfully');
+        await adminUser.save();
+        console.log('Admin user seeded successfully');
+      } catch (error) {
+        if (error.code === 11000) {
+          console.log('Admin user already exists');
+        } else {
+          console.error('Error seeding admin user:', error);
+        }
+      }
+    } else {
+      console.log('User with admin email already exists');
+      // Optionally update their role to admin if they're not already
+      if (existingUser.role !== UserRole.ADMIN) {
+        existingUser.role = UserRole.ADMIN;
+        existingUser.status = UserStatus.ACTIVE;
+        existingUser.emailVerified = true;
+        await existingUser.save();
+        console.log('Updated existing user to admin role');
+      }
     }
   }
 }

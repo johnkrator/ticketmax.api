@@ -10,6 +10,7 @@ import {
   MaxLength,
   IsObject,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { UserRole } from '../../../enums/user-role';
 
 export class CreateUserDto {
@@ -77,6 +78,21 @@ export class CreateUserDto {
   })
   @IsOptional()
   @IsEnum(UserRole)
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      // Handle case where client sends enum key names instead of values
+      const roleMap = {
+        USER: UserRole.USER,
+        ADMIN: UserRole.ADMIN,
+        ORGANIZER: UserRole.ORGANIZER,
+        user: UserRole.USER,
+        admin: UserRole.ADMIN,
+        organizer: UserRole.ORGANIZER,
+      };
+      return roleMap[value] || value;
+    }
+    return value;
+  })
   role?: UserRole;
 
   @ApiProperty({ description: 'User address', required: false })
