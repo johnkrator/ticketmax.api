@@ -14,6 +14,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { UserRole, UserStatus } from '../../enums/user-role';
 import { JwtConfigService } from '../../configurations/jwt_configuration/jwt.config.service';
 import { ResetPasswordDto } from './dto/reset-password';
@@ -129,6 +130,41 @@ export class UserService {
     await user.save();
 
     return { message: 'Email verified successfully' };
+  }
+
+  async resendVerificationCode(resendVerificationDto: ResendVerificationDto) {
+    const user = await this.userModel.findOne({
+      email: resendVerificationDto.email,
+    });
+
+    if (!user) {
+      throw new NotFoundException('User with this email does not exist');
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+
+    if (user.status === UserStatus.SUSPENDED) {
+      throw new BadRequestException('Account is suspended');
+    }
+
+    // Generate a new verification token
+    const emailVerificationToken = this.jwtConfigService.generateSixDigitCode();
+
+    user.emailVerificationToken = emailVerificationToken;
+    await user.save();
+
+    // Send verification email
+    await this.emailService.sendVerificationEmail(
+      user.email,
+      emailVerificationToken,
+      user.firstName,
+    );
+
+    return {
+      message: 'Verification code has been resent to your email address',
+    };
   }
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
