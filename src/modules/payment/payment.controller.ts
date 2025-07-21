@@ -20,7 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { PaymentService } from './payment.service';
 import { InitiatePaymentDto, PaymentWebhookDto } from './dto/payment.dto';
-import { JwtGuard } from '../../configurations/jwt_configuration/jwt-guard';
+import { JwtAuthGuard } from '../../configurations/jwt_configuration/jwt-auth-guard.service';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -28,7 +28,7 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post('initiate')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Initiate payment for a booking' })
   @ApiResponse({
@@ -51,7 +51,7 @@ export class PaymentController {
   }
 
   @Get('verify/:reference')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Verify payment status' })
   @ApiResponse({
@@ -86,7 +86,7 @@ export class PaymentController {
   }
 
   @Get()
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user payment history' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
@@ -109,7 +109,7 @@ export class PaymentController {
   }
 
   @Get('stats')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user payment statistics' })
   @ApiResponse({

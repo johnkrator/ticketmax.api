@@ -96,32 +96,10 @@ export class Booking extends BaseEntity {
   @ApiProperty({ description: 'Additional booking metadata', required: false })
   metadata?: {
     source?: string;
-    notes?: string;
+    promoCode?: string;
     specialRequests?: string;
+    ticketDeliveryMethod?: 'email' | 'pickup' | 'physical';
   };
-
-  // Virtual fields for computed properties
-  @ApiProperty({ description: 'Booking total in formatted currency' })
-  get formattedTotal(): string {
-    return `₦${this.totalAmount.toFixed(2)}`;
-  }
-
-  @ApiProperty({ description: 'Booking duration in hours until event' })
-  get timeToEvent(): number {
-    // This would need an event date to calculate properly
-    // Implementation depends on populated event data
-    return 0;
-  }
-
-  @ApiProperty({ description: 'Is booking cancellable' })
-  get isCancellable(): boolean {
-    return (
-      this.status === BookingStatus.PENDING ||
-      (this.status === BookingStatus.CONFIRMED &&
-        // Add 24-hour cancellation logic here
-        true)
-    );
-  }
 }
 
 export const BookingSchema = SchemaFactory.createForClass(Booking);
