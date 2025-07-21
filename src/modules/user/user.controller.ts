@@ -19,7 +19,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { UserRole } from '../../enums/user-role';
-import { JwtGuard } from '../../configurations/jwt_configuration/jwt-guard';
+import { JwtAuthGuard } from '../../configurations/jwt_configuration/jwt-auth-guard.service';
 import { Roles } from '../../configurations/jwt_configuration/roles.decorator';
 
 @ApiTags('user')
@@ -78,7 +78,7 @@ export class UserController {
   }
 
   @Post('change-password')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Change user password' })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
@@ -86,7 +86,7 @@ export class UserController {
   }
 
   @Get()
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
@@ -95,7 +95,7 @@ export class UserController {
   }
 
   @Get(':id')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User retrieved successfully' })
   findOne(@Param('id') id: string) {
@@ -103,7 +103,7 @@ export class UserController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiResponse({ status: 200, description: 'User updated successfully' })
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
@@ -111,7 +111,7 @@ export class UserController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete user by ID' })
   @ApiResponse({ status: 200, description: 'User deleted successfully' })

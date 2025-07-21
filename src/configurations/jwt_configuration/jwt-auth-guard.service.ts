@@ -11,7 +11,7 @@ import { Request } from 'express';
 import { UserRole, UserStatus } from '../../enums/user-role';
 
 @Injectable()
-export class JwtGuard implements CanActivate {
+export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly reflector: Reflector,

@@ -23,7 +23,7 @@ import {
   CreateOrganizerDto,
   UpdateOrganizerStepDto,
 } from './dto/create-organizer.dto';
-import { JwtGuard } from '../../configurations/jwt_configuration/jwt-guard';
+import { JwtAuthGuard } from '../../configurations/jwt_configuration/jwt-auth-guard.service';
 import { Roles } from '../../configurations/jwt_configuration/roles.decorator';
 import { UserRole } from '../../enums/user-role';
 
@@ -186,7 +186,7 @@ export class OrganizerController {
   }
 
   // Admin endpoints for reviewing applications
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @Get('admin/pending-applications')
@@ -206,7 +206,7 @@ export class OrganizerController {
     return this.organizerService.getPendingApplications();
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @Post('admin/:organizerId/approve')
@@ -239,7 +239,7 @@ export class OrganizerController {
     return this.organizerService.approveOrganizer(organizerId, adminId);
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtAuthGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @Post('admin/:organizerId/reject')

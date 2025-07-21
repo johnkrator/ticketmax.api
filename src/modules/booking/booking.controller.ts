@@ -20,11 +20,11 @@ import {
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { FilterBookingDto } from './dto/filter-booking.dto';
-import { JwtGuard } from '../../configurations/jwt_configuration/jwt-guard';
+import { JwtAuthGuard } from '../../configurations/jwt_configuration/jwt-auth-guard.service';
 
 @ApiTags('Bookings')
 @Controller('bookings')
-@UseGuards(JwtGuard)
+@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
