@@ -805,3 +805,409 @@ A: Update the `UserRole` enum and add corresponding guards.
 ---
 
 Built with ❤️ using [NestJS](https://nestjs.com/)
+
+## 🐳 Docker & Containerization
+
+### Docker Setup
+
+The application includes a robust multi-stage Dockerfile optimized for both development and production environments.
+
+#### Quick Start with Docker
+
+```bash
+# Clone and navigate to project
+git clone <repository-url>
+cd ticketmax.api
+
+# Start with Docker Compose (Production)
+docker-compose up -d
+
+# Start with Docker Compose (Development)
+docker-compose --profile dev up -d
+
+# Access the application
+curl http://localhost:3000/health
+```
+
+#### Docker Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Nginx Proxy   │────│  TicketMax API   │────│   MongoDB       │
+│   (Port 80)     │    │   (Port 3000)    │    │   (Port 27017)  │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                 │
+                       ┌──────────────────┐
+                       │     Redis        │
+                       │   (Port 6379)    │
+                       └──────────────────┘
+```
+
+### Multi-Stage Dockerfile
+
+Our Dockerfile uses multi-stage builds for optimization:
+
+- **Base Stage**: Common setup with security configurations
+- **Development Stage**: Includes dev dependencies and hot reload
+- **Build Stage**: Compiles TypeScript and optimizes for production
+- **Production Stage**: Minimal runtime image with security hardening
+
+#### Key Features
+
+- **Security Hardening**: Non-root user, minimal attack surface
+- **Health Checks**: Built-in container health monitoring
+- **Signal Handling**: Proper shutdown with dumb-init
+- **Layer Optimization**: Efficient caching and minimal image size
+- **Development Support**: Separate development target with hot reload
+
+### Docker Compose Services
+
+#### Production Stack (`docker-compose up`)
+
+```yaml
+services:
+  app:        # Main NestJS application
+  mongo:      # MongoDB database with initialization
+  redis:      # Redis cache with persistence
+  nginx:      # Reverse proxy with rate limiting
+```
+
+#### Development Stack (`docker-compose --profile dev up`)
+
+```yaml
+services:
+  app-dev:    # Development app with hot reload
+  mongo:      # MongoDB database
+  redis:      # Redis cache
+```
+
+### Container Configuration
+
+#### Environment Variables
+
+```bash
+# Copy Docker environment template
+cp .env.docker .env
+
+# Edit configuration for your environment
+nano .env
+```
+
+#### Key Configuration Options
+
+```env
+# Application
+NODE_ENV=production
+PORT=3000
+
+# Database (Auto-configured for Docker Compose)
+MONGODB_URI=mongodb://ticketmax:ticketmax123@mongo:27017/ticketmax
+
+# Cache (Auto-configured for Docker Compose)
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+# External Services (Configure these)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_USER=your-email@gmail.com
+TWILIO_ACCOUNT_SID=your-twilio-sid
+```
+
+### Development with Docker
+
+#### Hot Reload Development
+
+```bash
+# Start development environment
+docker-compose --profile dev up -d
+
+# View logs
+docker-compose logs -f app-dev
+
+# Execute commands in container
+docker-compose exec app-dev npm run test
+docker-compose exec app-dev npm run lint
+```
+
+#### Development Features
+
+- **Volume Mounting**: Source code mounted for instant changes
+- **Port Mapping**: Application available on `http://localhost:3001`
+- **Debug Support**: Development tools and debugging enabled
+- **Database Persistence**: Data persists between container restarts
+
+### Production Deployment
+
+#### Single Command Deployment
+
+```bash
+# Start production stack
+docker-compose up -d
+
+# Scale application instances
+docker-compose up -d --scale app=3
+
+# View production logs
+docker-compose logs -f app
+```
+
+#### Production Features
+
+- **Nginx Reverse Proxy**: Load balancing and SSL termination
+- **Rate Limiting**: Built-in protection against abuse
+- **Health Monitoring**: Automatic container restart on failure
+- **Data Persistence**: MongoDB and Redis data volumes
+- **Security Headers**: Comprehensive HTTP security
+
+### Container Management
+
+#### Useful Commands
+
+```bash
+# View running containers
+docker-compose ps
+
+# Check container health
+docker-compose exec app curl http://localhost:3000/health
+
+# View application logs
+docker-compose logs -f app
+
+# Update containers
+docker-compose pull
+docker-compose up -d
+
+# Clean up
+docker-compose down
+docker-compose down -v  # Remove volumes too
+```
+
+#### Monitoring & Debugging
+
+```bash
+# Monitor resource usage
+docker stats
+
+# Access container shell
+docker-compose exec app sh
+docker-compose exec mongo mongosh
+
+# Database operations
+docker-compose exec mongo mongosh ticketmax
+docker-compose exec redis redis-cli
+
+# Backup database
+docker-compose exec mongo mongodump --out /backup
+```
+
+### Security Hardening
+
+#### Container Security Features
+
+- **Non-Root User**: Application runs as user `nestjs` (UID 1001)
+- **Read-Only Root**: Filesystem protection against tampering
+- **Resource Limits**: Memory and CPU constraints
+- **Network Isolation**: Containers communicate via internal network
+- **Secret Management**: Environment-based configuration
+
+#### Network Security
+
+```yaml
+# Custom network configuration
+networks:
+  ticketmax-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+```
+
+#### Volume Security
+
+```yaml
+# Secure volume mounting
+volumes:
+  - ./uploads:/usr/src/app/uploads:rw
+  - mongo_data:/data/db:rw
+  - redis_data:/data:rw
+```
+
+### Performance Optimization
+
+#### Production Optimizations
+
+- **Multi-Stage Build**: Minimal production image (< 200MB)
+- **Layer Caching**: Optimized Docker layer structure
+- **Compression**: Gzip enabled via Nginx
+- **Connection Pooling**: Database connection optimization
+- **Resource Limits**: Defined memory and CPU constraints
+
+#### Scaling Configuration
+
+```bash
+# Horizontal scaling
+docker-compose up -d --scale app=5
+
+# Load balancer configuration
+# Nginx automatically distributes load across instances
+```
+
+### CI/CD Integration
+
+#### GitHub Actions Example
+
+```yaml
+name: Docker Build and Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t ticketmax-api .
+
+      - name: Run tests in container
+        run: |
+          docker run --rm ticketmax-api npm test
+
+      - name: Deploy to production
+        run: docker-compose up -d
+```
+
+#### GitLab CI Example
+
+```yaml
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE .
+    - docker push $CI_REGISTRY_IMAGE
+
+deploy:
+  stage: deploy
+  script:
+    - docker-compose pull
+    - docker-compose up -d
+  only:
+    - main
+```
+
+### Troubleshooting Docker
+
+#### Common Issues & Solutions
+
+**Container Won't Start**
+
+```bash
+# Check logs
+docker-compose logs app
+
+# Common issues:
+# - Environment variables missing
+# - Database connection failed
+# - Port already in use
+```
+
+**Database Connection Issues**
+
+```bash
+# Verify MongoDB is running
+docker-compose exec mongo mongosh --eval "db.adminCommand('ping')"
+
+# Check connection string
+docker-compose exec app env | grep MONGODB_URI
+```
+
+**Performance Issues**
+
+```bash
+# Monitor resource usage
+docker stats
+
+# Check container limits
+docker inspect ticketmax-api | grep -A 10 "Resources"
+
+# Optimize with resource limits
+docker-compose up -d --scale app=2
+```
+
+**Network Issues**
+
+```bash
+# Test inter-container connectivity
+docker-compose exec app ping mongo
+docker-compose exec app ping redis
+
+# Check network configuration
+docker network ls
+docker network inspect ticketmax_ticketmax-network
+```
+
+### Cloud Deployment
+
+#### AWS ECS Deployment
+
+```bash
+# Build and push to ECR
+aws ecr get-login-password | docker login --username AWS --password-stdin
+docker build -t ticketmax-api .
+docker tag ticketmax-api:latest your-account.dkr.ecr.region.amazonaws.com/ticketmax-api:latest
+docker push your-account.dkr.ecr.region.amazonaws.com/ticketmax-api:latest
+```
+
+#### Google Cloud Run
+
+```bash
+# Build and deploy
+gcloud builds submit --tag gcr.io/your-project/ticketmax-api
+gcloud run deploy --image gcr.io/your-project/ticketmax-api --platform managed
+```
+
+#### Digital Ocean App Platform
+
+```yaml
+# .do/app.yaml
+name: ticketmax-api
+services:
+  - name: api
+    source_dir: /
+    github:
+      repo: your-org/ticketmax-api
+      branch: main
+    run_command: npm start
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+```
+
+### Docker Best Practices
+
+#### Security Best Practices
+
+- ✅ Use non-root users
+- ✅ Scan images for vulnerabilities
+- ✅ Use official base images
+- ✅ Minimize attack surface
+- ✅ Set resource limits
+- ✅ Use secrets management
+
+#### Performance Best Practices
+
+- ✅ Multi-stage builds
+- ✅ Layer optimization
+- ✅ Use .dockerignore
+- ✅ Minimize image size
+- ✅ Cache dependencies
+- ✅ Health checks
+

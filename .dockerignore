@@ -1,0 +1,41 @@
+# Docker ignore file to optimize build context
+node_modules
+npm-debug.log
+dist
+.git
+.gitignore
+README.md
+.env
+.env.local
+.env.*.local
+coverage
+.nyc_output
+.DS_Store
+*.log
+uploads/*
+!uploads/.gitkeep
+
+# Test files
+test
+*.spec.ts
+*.test.ts
+jest.config.js
+
+# Development files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation
+docs
+*.md
+
+# CI/CD files
+.github
+.gitlab-ci.yml
+azure-pipelines.yml
+
+# Temporary files
+tmp
+temp
