@@ -802,10 +802,6 @@ A: Templates are in the email service. Modify the HTML templates there.
 **Q: How do I add new user roles?**
 A: Update the `UserRole` enum and add corresponding guards.
 
----
-
-Built with ❤️ using [NestJS](https://nestjs.com/)
-
 ## 🐳 Docker & Containerization
 
 ### Docker Setup
@@ -1210,4 +1206,8 @@ services:
 - ✅ Minimize image size
 - ✅ Cache dependencies
 - ✅ Health checks
+
+---
+
+Built with ❤️ using [NestJS](https://nestjs.com/)
 
