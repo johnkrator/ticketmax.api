@@ -18,7 +18,7 @@ export class EventService {
 
   async create(createEventDto: CreateEventDto): Promise<Event> {
     try {
-      // Set default image if not provided
+      // Set the default image if not provided
       if (!createEventDto.image) {
         createEventDto.image =
           'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&h=600&fit=crop';
@@ -26,8 +26,8 @@ export class EventService {
 
       const createdEvent = new this.eventModel({
         ...createEventDto,
-        attendeeUsers: [], // Initialize empty attendees array
-        favoritedBy: [], // Initialize empty favorites array
+        attendeeUsers: [], // Initialize an empty attendees array
+        favoritedBy: [], // Initialize an empty favorites array
         ticketsSold: 0,
       });
 
