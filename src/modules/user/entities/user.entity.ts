@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
+import { Document, Types } from 'mongoose';
 import { BaseEntity } from '../../base-entity';
 import { UserRole, UserStatus } from '../../../enums/user-role';
 
@@ -115,6 +116,37 @@ export class User extends BaseEntity {
   get isLocked(): boolean {
     return !!(this.lockUntil && this.lockUntil > new Date());
   }
+
+  // Relationship fields
+  @Prop({ type: Types.ObjectId, ref: 'Organizer' })
+  @ApiProperty({
+    description: 'Reference to organizer profile if user is an organizer',
+    required: false,
+  })
+  organizerProfile?: Types.ObjectId;
+
+  @Prop([{ type: Types.ObjectId, ref: 'Event' }])
+  @ApiProperty({ description: 'Events the user is attending', required: false })
+  attendingEvents?: Types.ObjectId[];
+
+  @Prop([{ type: Types.ObjectId, ref: 'Event' }])
+  @ApiProperty({
+    description: 'Events the user has favorited',
+    required: false,
+  })
+  favoriteEvents?: Types.ObjectId[];
+
+  @Prop({ type: Object })
+  @ApiProperty({ description: 'User event preferences', required: false })
+  eventPreferences?: {
+    categories: string[];
+    locations: string[];
+    priceRange: {
+      min: number;
+      max: number;
+    };
+    notifyNewEvents: boolean;
+  };
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

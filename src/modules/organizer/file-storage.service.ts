@@ -1,16 +1,28 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, OnModuleInit } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
-export class FileStorageService {
+export class FileStorageService implements OnModuleInit {
   private readonly uploadDir = process.env.UPLOAD_DIR || './uploads/documents';
 
-  constructor() {
-    // Ensure the upload directory exists
-    if (!fs.existsSync(this.uploadDir)) {
-      fs.mkdirSync(this.uploadDir, { recursive: true });
+  async onModuleInit() {
+    // Ensure the upload directory exists when the module initializes
+    try {
+      if (!fs.existsSync(this.uploadDir)) {
+        fs.mkdirSync(this.uploadDir, { recursive: true });
+      }
+    } catch (error) {
+      console.error('Failed to create upload directory:', error);
+      // Create a fallback directory
+      const fallbackDir = path.join(process.cwd(), 'uploads', 'documents');
+      try {
+        fs.mkdirSync(fallbackDir, { recursive: true });
+        console.log('Created fallback upload directory:', fallbackDir);
+      } catch (fallbackError) {
+        console.error('Failed to create fallback directory:', fallbackError);
+      }
     }
   }
 

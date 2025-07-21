@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
+import { ApiProperty } from '@nestjs/swagger';
 
 export type OrganizerDocument = Organizer & Document;
 
@@ -133,6 +134,12 @@ export class ExperienceDetails {
 
 @Schema({ timestamps: true })
 export class Organizer {
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @ApiProperty({
+    description: 'User ID associated with this organizer profile',
+  })
+  userId: Types.ObjectId;
+
   @Prop({ type: PersonalInformation, required: true })
   personalInformation: PersonalInformation;
 
@@ -175,11 +182,31 @@ export class Organizer {
 
   @Prop({ default: false })
   isOnboardingComplete: boolean;
+
+  // Relationship fields for events
+  @Prop([{ type: Types.ObjectId, ref: 'Event' }])
+  @ApiProperty({
+    description: 'Events created by this organizer',
+    required: false,
+  })
+  events: Types.ObjectId[];
+
+  @Prop({ type: Object })
+  @ApiProperty({ description: 'Organizer statistics', required: false })
+  statistics?: {
+    totalEvents: number;
+    totalTicketsSold: number;
+    totalRevenue: number;
+    averageRating: number;
+    totalAttendees: number;
+  };
 }
 
 export const OrganizerSchema = SchemaFactory.createForClass(Organizer);
 
-// Index for better query performance
-OrganizerSchema.index({ 'personalInformation.email': 1 });
+// Index for better query performance (removed duplicate email index)
+// The email index is already created by the unique: true property in PersonalInformation
+OrganizerSchema.index({ userId: 1 }); // Index for user relationship
 OrganizerSchema.index({ verificationStatus: 1 });
 OrganizerSchema.index({ isActive: 1 });
+OrganizerSchema.index({ 'personalInformation.email': 1 }); // Re-add for queries
