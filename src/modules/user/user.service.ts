@@ -45,18 +45,26 @@ export class UserService {
       ...createUserDto,
       password: hashedPassword,
       emailVerificationToken,
-      role: createUserDto.role || UserRole.USER,
+      role: createUserDto.role || UserRole.USER, // This ensures uppercase USER
       status: UserStatus.INACTIVE,
     });
 
     const savedUser = await user.save();
 
-    // Send verification email
-    await this.emailService.sendVerificationEmail(
-      savedUser.email,
-      emailVerificationToken,
-      savedUser.firstName,
-    );
+    // Send verification email with proper error handling
+    try {
+      const emailResult = await this.emailService.sendVerificationEmail(
+        savedUser.email,
+        emailVerificationToken,
+        savedUser.firstName,
+      );
+
+      if (!emailResult.success) {
+        console.error('Failed to send verification email:', emailResult.error);
+      }
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+    }
 
     return {
       message: 'User registered successfully. Please verify your email.',
@@ -155,12 +163,26 @@ export class UserService {
     user.emailVerificationToken = emailVerificationToken;
     await user.save();
 
-    // Send verification email
-    await this.emailService.sendVerificationEmail(
-      user.email,
-      emailVerificationToken,
-      user.firstName,
-    );
+    // Send verification email with proper error handling
+    try {
+      const emailResult = await this.emailService.sendVerificationEmail(
+        user.email,
+        emailVerificationToken,
+        user.firstName,
+      );
+
+      if (!emailResult.success) {
+        console.error('Failed to send verification email:', emailResult.error);
+        throw new BadRequestException(
+          'Failed to send verification email. Please try again.',
+        );
+      }
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      throw new BadRequestException(
+        'Failed to send verification email. Please try again.',
+      );
+    }
 
     return {
       message: 'Verification code has been resent to your email address',
@@ -168,27 +190,59 @@ export class UserService {
   }
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    console.log('Forgot password called for email:', forgotPasswordDto.email);
+
     const user = await this.userModel.findOne({
       email: forgotPasswordDto.email,
     });
+
     if (!user) {
+      console.log('User not found for email:', forgotPasswordDto.email);
       // Don't reveal if email exists
       return { message: 'If the email exists, a reset link has been sent' };
     }
 
+    console.log('User found:', user.firstName, user.email);
+
     const resetToken = this.jwtConfigService.generateSixDigitCode();
     const resetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    console.log('Generated reset token:', resetToken);
 
     user.passwordResetToken = resetToken;
     user.passwordResetExpires = resetExpires;
     await user.save();
 
-    // Send reset password email
-    await this.emailService.sendPasswordResetEmail(
-      user.email,
-      resetToken,
-      user.firstName,
-    );
+    console.log('User saved with reset token');
+
+    // Send reset password email with proper error handling
+    try {
+      console.log('Attempting to send password reset email to:', user.email);
+
+      const emailResult = await this.emailService.sendPasswordResetEmail(
+        user.email,
+        resetToken,
+        user.firstName,
+      );
+
+      console.log('Email service result:', emailResult);
+
+      if (!emailResult.success) {
+        console.error(
+          'Failed to send password reset email:',
+          emailResult.error,
+        );
+        // Still return success message to not reveal if email exists
+        // but log the error for debugging
+      } else {
+        console.log('Password reset email sent successfully');
+      }
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      console.error('Error stack:', error.stack);
+      // Don't throw the error to avoid revealing if email exists
+      // but log it for debugging
+    }
 
     return { message: 'If the email exists, a reset link has been sent' };
   }
@@ -271,6 +325,16 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
     return { message: 'User deleted successfully' };
+  }
+
+  // Test email configuration
+  async testEmailConfiguration(): Promise<boolean> {
+    return this.emailService.testEmailConfiguration();
+  }
+
+  // Find user by email (helper method)
+  async findByEmail(email: string) {
+    return this.userModel.findOne({ email });
   }
 
   private async handleFailedLogin(user: any) {

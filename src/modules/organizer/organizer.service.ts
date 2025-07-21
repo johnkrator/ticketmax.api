@@ -30,6 +30,7 @@ export class OrganizerService {
   // Start organizer onboarding process
   async startOnboarding(
     createOrganizerDto: CreateOrganizerDto,
+    userId: string,
   ): Promise<{ organizerId: string; message: string }> {
     // Check if organizer already exists with this email
     const existingOrganizer = await this.organizerModel.findOne({
@@ -63,6 +64,7 @@ export class OrganizerService {
 
     const organizer = new this.organizerModel({
       ...createOrganizerDto,
+      userId: userId, // Add the userId field
       personalInformation: {
         ...createOrganizerDto.personalInformation,
         dateOfBirth: new Date(
@@ -77,7 +79,7 @@ export class OrganizerService {
 
     await organizer.save();
 
-    // Send welcome email
+    // Send a welcome email
     try {
       await this.organizerEmailService.sendOnboardingStartedEmail(
         organizer.personalInformation.email,

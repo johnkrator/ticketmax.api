@@ -9,6 +9,7 @@ import {
   UploadedFiles,
   BadRequestException,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
@@ -27,11 +28,6 @@ import { JwtAuthGuard } from '../../configurations/jwt_configuration/jwt-auth-gu
 import { Roles } from '../../configurations/jwt_configuration/roles.decorator';
 import { UserRole } from '../../enums/user-role';
 import {
-  CacheKey,
-  CacheTTL,
-  CACHE_TIMES,
-} from '../../configurations/cache-config/cache.decorators';
-import {
   ThrottleMedium,
   ThrottleShort,
 } from '../../configurations/throttler-config/throttler.decorators';
@@ -42,6 +38,8 @@ export class OrganizerController {
   constructor(private readonly organizerService: OrganizerService) {}
 
   @Post('onboarding/start')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ThrottleMedium()
   @ApiOperation({ summary: 'Start organizer onboarding process' })
   @ApiResponse({
@@ -57,8 +55,14 @@ export class OrganizerController {
   })
   @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
   @ApiResponse({ status: 409, description: 'Organizer already exists' })
-  async startOnboarding(@Body() createOrganizerDto: CreateOrganizerDto) {
-    return this.organizerService.startOnboarding(createOrganizerDto);
+  async startOnboarding(
+    @Request() req,
+    @Body() createOrganizerDto: CreateOrganizerDto,
+  ) {
+    return this.organizerService.startOnboarding(
+      createOrganizerDto,
+      req.user.id,
+    );
   }
 
   @Patch('onboarding/:organizerId/step')
