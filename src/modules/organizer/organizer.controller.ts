@@ -61,7 +61,7 @@ export class OrganizerController {
   ) {
     return this.organizerService.startOnboarding(
       createOrganizerDto,
-      req.user.id,
+      req.user.sub, // Use 'sub' instead of 'id' to get the user ID from JWT payload
     );
   }
 
@@ -98,11 +98,36 @@ export class OrganizerController {
   @Post('onboarding/:organizerId/documents')
   @ThrottleMedium()
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'idDocument', maxCount: 1 },
-      { name: 'businessLicense', maxCount: 1 },
-      { name: 'taxDocument', maxCount: 1 },
-    ]),
+    FileFieldsInterceptor(
+      [
+        { name: 'idDocument', maxCount: 1 },
+        { name: 'businessLicense', maxCount: 1 },
+        { name: 'taxDocument', maxCount: 1 },
+      ],
+      {
+        limits: {
+          fileSize: 10 * 1024 * 1024, // 10MB
+        },
+        fileFilter: (req, file, cb) => {
+          const allowedMimeTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/jpg',
+            'application/pdf',
+          ];
+          if (allowedMimeTypes.includes(file.mimetype)) {
+            cb(null, true);
+          } else {
+            cb(
+              new BadRequestException(
+                `Invalid file type: ${file.mimetype}. Only JPEG, PNG, and PDF files are allowed.`,
+              ),
+              false,
+            );
+          }
+        },
+      },
+    ),
   )
   @ApiOperation({ summary: 'Upload verification documents' })
   @ApiConsumes('multipart/form-data')
@@ -128,36 +153,81 @@ export class OrganizerController {
       taxDocument?: any[];
     },
   ) {
-    // Validate file types
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    try {
+      // Debug logging to see what we receive
+      console.log('Received files:', files);
+      console.log(
+        'Files keys:',
+        files ? Object.keys(files) : 'No files object',
+      );
 
-    const fileObj: any = {};
-
-    if (files.idDocument?.[0]) {
-      if (!allowedMimeTypes.includes(files.idDocument[0].mimetype)) {
-        throw new BadRequestException('Invalid file type for ID document');
+      // Check if files object exists
+      if (!files) {
+        throw new BadRequestException(
+          'No files were uploaded. Please ensure you are sending multipart/form-data with one of these field names: idDocument, businessLicense, or taxDocument',
+        );
       }
-      fileObj.idDocument = files.idDocument[0];
-    }
 
-    if (files.businessLicense?.[0]) {
-      if (!allowedMimeTypes.includes(files.businessLicense[0].mimetype)) {
-        throw new BadRequestException('Invalid file type for business license');
+      // Check if any files were uploaded
+      if (Object.keys(files).length === 0) {
+        throw new BadRequestException(
+          'No files uploaded. Please use one of these field names: idDocument, businessLicense, or taxDocument',
+        );
       }
-      fileObj.businessLicense = files.businessLicense[0];
-    }
 
-    if (files.taxDocument?.[0]) {
-      if (!allowedMimeTypes.includes(files.taxDocument[0].mimetype)) {
-        throw new BadRequestException('Invalid file type for tax document');
+      const fileObj: any = {};
+
+      // Process each document type with improved error handling
+      const processFile = (fileArray: any[], fieldName: string) => {
+        if (fileArray && fileArray[0]) {
+          const file = fileArray[0];
+          console.log(`Processing ${fieldName}:`, {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+          });
+
+          if (!file.buffer || file.buffer.length === 0) {
+            throw new BadRequestException(
+              `Empty file received for ${fieldName}`,
+            );
+          }
+          return file;
+        }
+        return null;
+      };
+
+      // Process each document type
+      if (files.idDocument) {
+        const file = processFile(files.idDocument, 'ID document');
+        if (file) fileObj.idDocument = file;
       }
-      fileObj.taxDocument = files.taxDocument[0];
-    }
 
-    return this.organizerService.uploadVerificationDocuments(
-      organizerId,
-      fileObj,
-    );
+      if (files.businessLicense) {
+        const file = processFile(files.businessLicense, 'business license');
+        if (file) fileObj.businessLicense = file;
+      }
+
+      if (files.taxDocument) {
+        const file = processFile(files.taxDocument, 'tax document');
+        if (file) fileObj.taxDocument = file;
+      }
+
+      // Check if at least one valid file was processed
+      if (Object.keys(fileObj).length === 0) {
+        throw new BadRequestException(
+          'No valid files were uploaded. Please upload at least one document using field names: idDocument, businessLicense, or taxDocument',
+        );
+      }
+
+      return this.organizerService.uploadVerificationDocuments(
+        organizerId,
+        fileObj,
+      );
+    } catch (error) {
+      console.error('File upload error:', error);
+      throw error;
+    }
   }
 
   @Get('onboarding/:organizerId/status')
@@ -299,5 +369,85 @@ export class OrganizerController {
   @ApiResponse({ status: 404, description: 'Organizer not found' })
   async getOrganizerDetails(@Param('organizerId') organizerId: string) {
     return this.organizerService.getOnboardingStatus(organizerId);
+  }
+
+  @Get(':organizerId/documents/:documentType/download')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get signed URL for document download' })
+  @ApiResponse({
+    status: 200,
+    description: 'Document URL retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        url: { type: 'string' },
+        expiresIn: { type: 'number' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Document not found' })
+  async getDocumentDownloadUrl(
+    @Param('organizerId') organizerId: string,
+    @Param('documentType') documentType: 'id' | 'business' | 'tax',
+    @Request() req,
+  ) {
+    // Only allow organizer to access their own documents or admin access
+    const organizer = await this.organizerService.findByEmail(req.user.email);
+    if (!organizer || (organizer._id as any).toString() !== organizerId) {
+      if (req.user.role !== 'ADMIN') {
+        throw new BadRequestException('Access denied');
+      }
+    }
+
+    const signedUrl = await this.organizerService.getDocumentSignedUrl(
+      organizerId,
+      documentType,
+      3600, // 1 hour expiry
+    );
+
+    return {
+      url: signedUrl,
+      expiresIn: 3600,
+    };
+  }
+
+  @Post('test-upload')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'testFile', maxCount: 1 }], {
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+      },
+    }),
+  )
+  @ApiOperation({ summary: 'Test file upload endpoint' })
+  @ApiConsumes('multipart/form-data')
+  async testUpload(
+    @UploadedFiles()
+    files: {
+      testFile?: any[];
+    },
+  ) {
+    console.log('Test upload - received files:', files);
+
+    if (!files || !files.testFile || files.testFile.length === 0) {
+      return {
+        success: false,
+        message: 'No file uploaded',
+        received: files,
+      };
+    }
+
+    const file = files.testFile[0];
+    return {
+      success: true,
+      message: 'File upload test successful',
+      fileInfo: {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        fieldname: file.fieldname,
+      },
+    };
   }
 }

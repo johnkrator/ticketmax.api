@@ -17,6 +17,8 @@ import {
   UpdateOrganizerStepDto,
 } from './dto/create-organizer.dto';
 import { OrganizerEmailService } from './organizer-email.service';
+import { FileStorageService } from './file-storage.service';
+import { UploadResult } from './cloud-storage.service';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -25,6 +27,7 @@ export class OrganizerService {
     @InjectModel(Organizer.name)
     private organizerModel: Model<OrganizerDocument>,
     private organizerEmailService: OrganizerEmailService,
+    private fileStorageService: FileStorageService,
   ) {}
 
   // Start organizer onboarding process
@@ -187,7 +190,7 @@ export class OrganizerService {
   async uploadVerificationDocuments(
     organizerId: string,
     files: {
-      idDocument?: any;
+      idDocument?: any; // Using 'any' to avoid Express.Multer.File type issues
       businessLicense?: any;
       taxDocument?: any;
     },
@@ -198,39 +201,99 @@ export class OrganizerService {
       throw new NotFoundException('Organizer not found');
     }
 
-    // In a real implementation, you would upload files to cloud storage (AWS S3, etc.)
-    // For now, we'll simulate file URLs
     const verificationDocuments: any = {};
+    const uploadResults: UploadResult[] = [];
 
-    if (files.idDocument) {
-      verificationDocuments.idDocumentUrl = await this.uploadFileToStorage(
-        files.idDocument,
-      );
+    try {
+      if (files.idDocument) {
+        const result = await this.fileStorageService.uploadFile(
+          files.idDocument,
+          organizerId,
+          'id-document',
+        );
+        verificationDocuments.idDocumentUrl = result.url;
+        verificationDocuments.idDocumentData = result;
+        uploadResults.push(result);
+      }
+
+      if (files.businessLicense) {
+        const result = await this.fileStorageService.uploadFile(
+          files.businessLicense,
+          organizerId,
+          'business-license',
+        );
+        verificationDocuments.businessLicenseUrl = result.url;
+        verificationDocuments.businessLicenseData = result;
+        uploadResults.push(result);
+      }
+
+      if (files.taxDocument) {
+        const result = await this.fileStorageService.uploadFile(
+          files.taxDocument,
+          organizerId,
+          'tax-document',
+        );
+        verificationDocuments.taxDocumentUrl = result.url;
+        verificationDocuments.taxDocumentData = result;
+        uploadResults.push(result);
+      }
+
+      verificationDocuments.uploadedAt = new Date();
+
+      await this.organizerModel.findByIdAndUpdate(organizerId, {
+        verificationDocuments,
+        currentStep: Math.max(organizer.currentStep, 4), // Documents are step 4
+      });
+
+      return {
+        success: true,
+        message: 'Verification documents uploaded successfully',
+      };
+    } catch (error) {
+      // Clean up any uploaded files if there was an error
+      for (const result of uploadResults) {
+        try {
+          await this.fileStorageService.deleteFile(result);
+        } catch (deleteError) {
+          console.error('Error cleaning up uploaded file:', deleteError);
+        }
+      }
+      throw error;
+    }
+  }
+
+  // Generate signed URLs for accessing uploaded documents
+  async getDocumentSignedUrl(
+    organizerId: string,
+    documentType: 'id' | 'business' | 'tax',
+    expiresIn: number = 3600,
+  ): Promise<string> {
+    const organizer = await this.organizerModel.findById(organizerId);
+
+    if (!organizer || !organizer.verificationDocuments) {
+      throw new NotFoundException('Documents not found');
     }
 
-    if (files.businessLicense) {
-      verificationDocuments.businessLicenseUrl = await this.uploadFileToStorage(
-        files.businessLicense,
-      );
+    let uploadResult: UploadResult;
+    switch (documentType) {
+      case 'id':
+        uploadResult = organizer.verificationDocuments.idDocumentData;
+        break;
+      case 'business':
+        uploadResult = organizer.verificationDocuments.businessLicenseData;
+        break;
+      case 'tax':
+        uploadResult = organizer.verificationDocuments.taxDocumentData;
+        break;
+      default:
+        throw new BadRequestException('Invalid document type');
     }
 
-    if (files.taxDocument) {
-      verificationDocuments.taxDocumentUrl = await this.uploadFileToStorage(
-        files.taxDocument,
-      );
+    if (!uploadResult) {
+      throw new NotFoundException(`${documentType} document not found`);
     }
 
-    verificationDocuments.uploadedAt = new Date();
-
-    await this.organizerModel.findByIdAndUpdate(organizerId, {
-      verificationDocuments,
-      currentStep: Math.max(organizer.currentStep, 4), // Documents are step 4
-    });
-
-    return {
-      success: true,
-      message: 'Verification documents uploaded successfully',
-    };
+    return this.fileStorageService.generateSignedUrl(uploadResult, expiresIn);
   }
 
   // Get organizer onboarding status
@@ -376,11 +439,5 @@ export class OrganizerService {
     let encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     return iv.toString('hex') + ':' + encrypted;
-  }
-
-  private async uploadFileToStorage(file: any): Promise<string> {
-    // In a real implementation, upload to cloud storage (AWS S3, Cloudinary, etc.)
-    // Return the file URL
-    return `https://storage.ticketmax.com/documents/${Date.now()}-${file.originalname}`;
   }
 }

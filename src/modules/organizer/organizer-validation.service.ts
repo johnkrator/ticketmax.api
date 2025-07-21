@@ -82,7 +82,7 @@ export class OrganizerValidationService {
     }
   }
 
-  // Check if organizer meets minimum requirements for approval
+  // Check if the organizer meets minimum requirements for approval
   checkApprovalEligibility(organizer: any): {
     eligible: boolean;
     reasons: string[];

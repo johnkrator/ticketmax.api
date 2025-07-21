@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, OnModuleInit } from '@nestjs/common';
+import { CloudStorageService, UploadResult } from './cloud-storage.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,8 +8,10 @@ import { v4 as uuidv4 } from 'uuid';
 export class FileStorageService implements OnModuleInit {
   private readonly uploadDir = process.env.UPLOAD_DIR || './uploads/documents';
 
+  constructor(private cloudStorageService: CloudStorageService) {}
+
   async onModuleInit() {
-    // Ensure the upload directory exists when the module initializes
+    // Ensure the upload directory exists when the module initializes (for local fallback)
     try {
       if (!fs.existsSync(this.uploadDir)) {
         fs.mkdirSync(this.uploadDir, { recursive: true });
@@ -26,60 +29,101 @@ export class FileStorageService implements OnModuleInit {
     }
   }
 
-  async uploadFile(file: any, organizerId: string): Promise<string> {
+  async uploadFile(
+    file: any, // Using 'any' to avoid Express.Multer.File type issues
+    organizerId: string,
+    documentType: string,
+  ): Promise<UploadResult> {
     try {
-      // Generate unique filename
-      const fileExtension = path.extname(file.originalname);
-      const filename = `${organizerId}_${uuidv4()}${fileExtension}`;
-      const filePath = path.join(this.uploadDir, filename);
-
-      // Write a file to disk
-      fs.writeFileSync(filePath, file.buffer);
-
-      // In production, you would upload to cloud storage (AWS S3, Google Cloud, etc.)
-      // For now, return a local file URL
-      return `${process.env.API_URL || 'http://localhost:3000'}/files/documents/${filename}`;
+      // Try cloud storage first
+      return await this.cloudStorageService.uploadFile(
+        file,
+        organizerId,
+        documentType,
+      );
     } catch (error) {
-      throw new BadRequestException('Failed to upload file');
+      console.error(
+        'Cloud storage upload failed, falling back to local:',
+        error,
+      );
+      // Fallback to local storage
+      return this.uploadFileLocally(file, organizerId, documentType);
     }
   }
 
-  async deleteFile(fileUrl: string): Promise<void> {
+  private async uploadFileLocally(
+    file: any, // Using 'any' to avoid Express.Multer.File type issues
+    organizerId: string,
+    documentType: string,
+  ): Promise<UploadResult> {
     try {
-      const filename = path.basename(fileUrl);
+      // Generate unique filename
+      const fileExtension = path.extname(file.originalname);
+      const filename = `${organizerId}_${documentType}_${uuidv4()}${fileExtension}`;
       const filePath = path.join(this.uploadDir, filename);
 
+      // Write file to disk
+      fs.writeFileSync(filePath, file.buffer);
+
+      // Return local file URL
+      const url = `${process.env.API_URL || 'http://localhost:3500'}/files/documents/${filename}`;
+
+      return {
+        url,
+        key: filename,
+        provider: 'local' as any,
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to upload file locally');
+    }
+  }
+
+  async deleteFile(uploadResult: UploadResult): Promise<void> {
+    if (uploadResult.provider === 'local') {
+      return this.deleteFileLocally(uploadResult.key || '');
+    }
+    return this.cloudStorageService.deleteFile(uploadResult);
+  }
+
+  private async deleteFileLocally(filename: string): Promise<void> {
+    try {
+      const filePath = path.join(this.uploadDir, filename);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
     } catch (error) {
-      console.error('Failed to delete file:', error);
+      console.error('Failed to delete local file:', error);
     }
   }
 
-  getFileStream(filename: string): fs.ReadStream {
-    const filePath = path.join(this.uploadDir, filename);
-
-    if (!fs.existsSync(filePath)) {
-      throw new BadRequestException('File not found');
+  async generateSignedUrl(
+    uploadResult: UploadResult,
+    expiresIn: number = 3600,
+  ): Promise<string> {
+    if (uploadResult.provider === 'local') {
+      return uploadResult.url; // Local files don't need signed URLs
     }
-
-    return fs.createReadStream(filePath);
+    return this.cloudStorageService.generateSignedUrl(uploadResult, expiresIn);
   }
 
-  // Validate a file before upload
-  validateFile(file: any): void {
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-
-    if (!allowedMimeTypes.includes(file.mimetype)) {
-      throw new BadRequestException(
-        'Invalid file type. Only JPEG, PNG, and PDF files are allowed',
-      );
+  async getFileInfo(uploadResult: UploadResult): Promise<any> {
+    if (uploadResult.provider === 'local') {
+      return this.getLocalFileInfo(uploadResult.key || '');
     }
+    return this.cloudStorageService.getFileInfo(uploadResult);
+  }
 
-    if (file.size > maxSize) {
-      throw new BadRequestException('File size exceeds 5MB limit');
+  private getLocalFileInfo(filename: string): any {
+    try {
+      const filePath = path.join(this.uploadDir, filename);
+      const stats = fs.statSync(filePath);
+      return {
+        url: `${process.env.API_URL || 'http://localhost:3500'}/files/documents/${filename}`,
+        size: stats.size,
+        uploadedAt: stats.birthtime,
+      };
+    } catch (error) {
+      return null;
     }
   }
 }
