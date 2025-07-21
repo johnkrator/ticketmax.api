@@ -84,6 +84,11 @@ export class Event extends BaseEntity {
     cancellationPolicy?: string;
   };
 
+  // Relationship fields for bookings and payments
+  @Prop([{ type: Types.ObjectId, ref: 'Booking' }])
+  @ApiProperty({ description: 'Bookings for this event', required: false })
+  bookings?: Types.ObjectId[];
+
   // Virtual field for attendee count
   @ApiProperty({
     description: 'Number of attendees (computed from attendeeUsers array)',
@@ -91,11 +96,27 @@ export class Event extends BaseEntity {
   get attendees(): string {
     return this.attendeeUsers ? this.attendeeUsers.length.toString() : '0';
   }
+
+  // Virtual field for available tickets
+  @ApiProperty({
+    description: 'Number of available tickets',
+  })
+  get availableTickets(): number {
+    return this.totalTickets - this.ticketsSold;
+  }
+
+  // Virtual field for booking count
+  @ApiProperty({
+    description: 'Number of bookings for this event',
+  })
+  get bookingCount(): number {
+    return this.bookings ? this.bookings.length : 0;
+  }
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);
 
-// Add virtual for attendees count
+// Add virtual for attendee count
 EventSchema.virtual('attendees').get(function () {
   return this.attendeeUsers ? this.attendeeUsers.length.toString() : '0';
 });

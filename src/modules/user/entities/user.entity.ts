@@ -119,34 +119,33 @@ export class User extends BaseEntity {
 
   // Relationship fields
   @Prop({ type: Types.ObjectId, ref: 'Organizer' })
-  @ApiProperty({
-    description: 'Reference to organizer profile if user is an organizer',
-    required: false,
-  })
-  organizerProfile?: Types.ObjectId;
+  @ApiProperty({ description: 'Associated organizer profile', required: false })
+  organizerId?: Types.ObjectId;
 
+  // User's bookings relationship (virtual field for population)
+  @Prop([{ type: Types.ObjectId, ref: 'Booking' }])
+  @ApiProperty({ description: 'User bookings', required: false })
+  bookings?: Types.ObjectId[];
+
+  // User's payments relationship (virtual field for population)
+  @Prop([{ type: Types.ObjectId, ref: 'Payment' }])
+  @ApiProperty({ description: 'User payments', required: false })
+  payments?: Types.ObjectId[];
+
+  // Events created by user (if user is an organizer)
   @Prop([{ type: Types.ObjectId, ref: 'Event' }])
-  @ApiProperty({ description: 'Events the user is attending', required: false })
+  @ApiProperty({ description: 'Events created by user', required: false })
+  createdEvents?: Types.ObjectId[];
+
+  // Events favorited by user
+  @Prop([{ type: Types.ObjectId, ref: 'Event' }])
+  @ApiProperty({ description: 'Events favorited by user', required: false })
+  favoritedEvents?: Types.ObjectId[];
+
+  // Events user is attending
+  @Prop([{ type: Types.ObjectId, ref: 'Event' }])
+  @ApiProperty({ description: 'Events user is attending', required: false })
   attendingEvents?: Types.ObjectId[];
-
-  @Prop([{ type: Types.ObjectId, ref: 'Event' }])
-  @ApiProperty({
-    description: 'Events the user has favorited',
-    required: false,
-  })
-  favoriteEvents?: Types.ObjectId[];
-
-  @Prop({ type: Object })
-  @ApiProperty({ description: 'User event preferences', required: false })
-  eventPreferences?: {
-    categories: string[];
-    locations: string[];
-    priceRange: {
-      min: number;
-      max: number;
-    };
-    notifyNewEvents: boolean;
-  };
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
@@ -161,7 +160,7 @@ UserSchema.virtual('isLocked').get(function () {
   return !!(this.lockUntil && this.lockUntil > new Date());
 });
 
-// Only add indexes that aren't already unique in @Prop
+// Only add indexes that aren't already unique in the @Prop
 // Removed _id index as it's not allowed by MongoDB
 UserSchema.index({ role: 1 });
 UserSchema.index({ status: 1 });
