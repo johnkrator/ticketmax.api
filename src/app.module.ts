@@ -5,7 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
 import { EventModule } from './modules/event/event.module';
-import { mongooseAsyncConfig } from './configurations/database-config/datasource.config';
+import { OrganizerModule } from './modules/organizer/organizer.module';
 import { AdminSeedModule } from './modules/admin-seed/admin-seed.module';
 import { EmailSendModule } from './middleware/email-send/email-send.module';
 import { SmsSendModule } from './middleware/sms-send/sms-send.module';
@@ -15,11 +15,13 @@ import { NotificationModule } from './middleware/notification/notification.modul
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
     }),
-    MongooseModule.forRootAsync(mongooseAsyncConfig),
+    MongooseModule.forRoot(
+      process.env.MONGODB_URI || 'mongodb://localhost:27017/ticketmax',
+    ),
     UserModule,
     EventModule,
+    OrganizerModule,
     AdminSeedModule,
     EmailSendModule,
     SmsSendModule,
