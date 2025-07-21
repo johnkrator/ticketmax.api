@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,6 +23,15 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { FilterEventDto } from './dto/filter-event.dto';
 import { Event } from './entities/event.entity';
+import {
+  CacheKey,
+  CacheTTL,
+  CACHE_TIMES,
+} from '../../configurations/cache-config/cache.decorators';
+import {
+  ThrottleMedium,
+  ThrottleShort,
+} from '../../configurations/throttler-config/throttler.decorators';
 
 @ApiTags('events')
 @Controller('events')
@@ -29,6 +39,7 @@ export class EventController {
   constructor(private readonly eventService: EventService) {}
 
   @Post()
+  @ThrottleMedium()
   @ApiOperation({ summary: 'Create a new event' })
   @ApiResponse({
     status: 201,
@@ -41,6 +52,9 @@ export class EventController {
   }
 
   @Get()
+  @ThrottleShort()
+  @CacheKey('events-all')
+  @CacheTTL(CACHE_TIMES.MEDIUM)
   @ApiOperation({ summary: 'Get all events with optional filtering' })
   @ApiResponse({ status: 200, description: 'Events retrieved successfully' })
   async findAll(@Query() filterDto: FilterEventDto) {
@@ -48,6 +62,9 @@ export class EventController {
   }
 
   @Get('featured')
+  @ThrottleShort()
+  @CacheKey('events-featured')
+  @CacheTTL(CACHE_TIMES.LONG)
   @ApiOperation({ summary: 'Get featured events' })
   @ApiResponse({
     status: 200,
@@ -59,6 +76,9 @@ export class EventController {
   }
 
   @Get('statistics')
+  @ThrottleMedium()
+  @CacheKey('events-statistics')
+  @CacheTTL(CACHE_TIMES.MEDIUM)
   @ApiOperation({ summary: 'Get event statistics' })
   @ApiResponse({
     status: 200,
@@ -69,6 +89,9 @@ export class EventController {
   }
 
   @Get('category/:category')
+  @ThrottleShort()
+  @CacheKey('events-category')
+  @CacheTTL(CACHE_TIMES.LONG)
   @ApiOperation({ summary: 'Get events by category' })
   @ApiResponse({
     status: 200,
@@ -82,6 +105,9 @@ export class EventController {
   }
 
   @Get('organizer/:organizerId')
+  @ThrottleShort()
+  @CacheKey('events-organizer')
+  @CacheTTL(CACHE_TIMES.MEDIUM)
   @ApiOperation({ summary: 'Get events by organizer' })
   @ApiResponse({
     status: 200,
@@ -95,6 +121,9 @@ export class EventController {
   }
 
   @Get(':id')
+  @ThrottleShort()
+  @CacheKey('event-detail')
+  @CacheTTL(CACHE_TIMES.MEDIUM)
   @ApiOperation({ summary: 'Get event by ID' })
   @ApiResponse({
     status: 200,

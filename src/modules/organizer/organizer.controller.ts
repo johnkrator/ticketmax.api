@@ -26,6 +26,15 @@ import {
 import { JwtAuthGuard } from '../../configurations/jwt_configuration/jwt-auth-guard.service';
 import { Roles } from '../../configurations/jwt_configuration/roles.decorator';
 import { UserRole } from '../../enums/user-role';
+import {
+  CacheKey,
+  CacheTTL,
+  CACHE_TIMES,
+} from '../../configurations/cache-config/cache.decorators';
+import {
+  ThrottleMedium,
+  ThrottleShort,
+} from '../../configurations/throttler-config/throttler.decorators';
 
 @ApiTags('Organizer Onboarding')
 @Controller('organizer')
@@ -33,6 +42,7 @@ export class OrganizerController {
   constructor(private readonly organizerService: OrganizerService) {}
 
   @Post('onboarding/start')
+  @ThrottleMedium()
   @ApiOperation({ summary: 'Start organizer onboarding process' })
   @ApiResponse({
     status: 201,
@@ -52,6 +62,7 @@ export class OrganizerController {
   }
 
   @Patch('onboarding/:organizerId/step')
+  @ThrottleMedium()
   @ApiOperation({ summary: 'Update specific step of onboarding process' })
   @ApiResponse({
     status: 200,
@@ -81,6 +92,7 @@ export class OrganizerController {
   }
 
   @Post('onboarding/:organizerId/documents')
+  @ThrottleMedium()
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'idDocument', maxCount: 1 },
@@ -145,6 +157,7 @@ export class OrganizerController {
   }
 
   @Get('onboarding/:organizerId/status')
+  @ThrottleShort()
   @ApiOperation({ summary: 'Get organizer onboarding status' })
   @ApiResponse({
     status: 200,
@@ -156,6 +169,7 @@ export class OrganizerController {
   }
 
   @Get('check-email/:email')
+  @ThrottleShort()
   @ApiOperation({ summary: 'Check if organizer exists with given email' })
   @ApiResponse({
     status: 200,

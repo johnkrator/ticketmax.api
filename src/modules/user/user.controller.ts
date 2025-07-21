@@ -21,6 +21,18 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { UserRole } from '../../enums/user-role';
 import { JwtAuthGuard } from '../../configurations/jwt_configuration/jwt-auth-guard.service';
 import { Roles } from '../../configurations/jwt_configuration/roles.decorator';
+import {
+  CacheKey,
+  CacheTTL,
+  CACHE_TIMES,
+} from '../../configurations/cache-config/cache.decorators';
+import {
+  ThrottleAuth,
+  ThrottleMedium,
+  ThrottleShort,
+  ThrottleSensitive,
+} from '../../configurations/throttler-config/throttler.decorators';
+import { AuthThrottlerGuard } from '../../configurations/throttler-config/throttler.guards';
 
 @ApiTags('user')
 @Controller('user')
@@ -28,6 +40,8 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('register')
+  @UseGuards(AuthThrottlerGuard)
+  @ThrottleAuth()
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   register(@Body() createUserDto: CreateUserDto) {
@@ -35,6 +49,8 @@ export class UserController {
   }
 
   @Post('login')
+  @UseGuards(AuthThrottlerGuard)
+  @ThrottleAuth()
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   login(@Body() loginDto: LoginDto) {
@@ -42,6 +58,8 @@ export class UserController {
   }
 
   @Post('verify-email/:token')
+  @UseGuards(AuthThrottlerGuard)
+  @ThrottleSensitive()
   @ApiOperation({ summary: 'Verify email address' })
   @ApiResponse({ status: 200, description: 'Email verified successfully' })
   verifyEmail(@Param('token') token: string) {
@@ -49,7 +67,9 @@ export class UserController {
   }
 
   @Post('resend-verification')
-  @ApiOperation({ summary: 'Resend email verification code' })
+  @UseGuards(AuthThrottlerGuard)
+  @ThrottleSensitive()
+  @ApiOperation({ summary: 'Resend verification email' })
   @ApiResponse({
     status: 200,
     description: 'Verification code resent successfully',
@@ -59,18 +79,22 @@ export class UserController {
     status: 400,
     description: 'Email already verified or account suspended',
   })
-  resendVerificationCode(@Body() resendVerificationDto: ResendVerificationDto) {
+  resendVerification(@Body() resendVerificationDto: ResendVerificationDto) {
     return this.userService.resendVerificationCode(resendVerificationDto);
   }
 
   @Post('forgot-password')
-  @ApiOperation({ summary: 'Send password reset email' })
+  @UseGuards(AuthThrottlerGuard)
+  @ThrottleSensitive()
+  @ApiOperation({ summary: 'Request password reset' })
   @ApiResponse({ status: 200, description: 'Password reset email sent' })
   forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.userService.forgotPassword(forgotPasswordDto);
   }
 
   @Post('reset-password')
+  @UseGuards(AuthThrottlerGuard)
+  @ThrottleSensitive()
   @ApiOperation({ summary: 'Reset password with token' })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
   resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
@@ -79,23 +103,43 @@ export class UserController {
 
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Change user password' })
+  @ThrottleMedium()
+  @ApiOperation({ summary: 'Change password for authenticated user' })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
-    return this.userService.changePassword(req.user.sub, changePasswordDto);
+    return this.userService.changePassword(req.user.id, changePasswordDto);
   }
 
   @Get()
   @UseGuards(JwtAuthGuard)
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get all users' })
+  @ThrottleMedium()
+  @CacheKey('users-all')
+  @CacheTTL(CACHE_TIMES.SHORT)
+  @ApiOperation({ summary: 'Get all users (Admin only)' })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
   findAll() {
     return this.userService.findAll();
   }
 
-  @Get(':id')
+  @Get('profile')
   @UseGuards(JwtAuthGuard)
+  @ThrottleShort()
+  @CacheKey('user-profile')
+  @CacheTTL(CACHE_TIMES.SHORT)
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+  })
+  getProfile(@Request() req) {
+    return this.userService.findOne(req.user.id);
+  }
+
+  @Get(':id')
+  @ThrottleShort()
+  @CacheKey('user-detail')
+  @CacheTTL(CACHE_TIMES.MEDIUM)
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User retrieved successfully' })
   findOne(@Param('id') id: string) {

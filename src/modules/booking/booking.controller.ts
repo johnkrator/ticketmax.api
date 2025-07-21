@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   HttpStatus,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,15 +22,27 @@ import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { FilterBookingDto } from './dto/filter-booking.dto';
 import { JwtAuthGuard } from '../../configurations/jwt_configuration/jwt-auth-guard.service';
+import {
+  CacheKey,
+  CacheTTL,
+  CACHE_TIMES,
+} from '../../configurations/cache-config/cache.decorators';
+import {
+  ThrottleMedium,
+  ThrottleShort,
+} from '../../configurations/throttler-config/throttler.decorators';
+import { CacheInterceptor } from '../../configurations/cache-config/cache.interceptor';
 
 @ApiTags('Bookings')
 @Controller('bookings')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
+@UseInterceptors(CacheInterceptor)
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
   @Post()
+  @ThrottleMedium()
   @ApiOperation({ summary: 'Create a new booking' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -45,6 +58,9 @@ export class BookingController {
   }
 
   @Get()
+  @ThrottleShort()
+  @CacheKey('user-bookings')
+  @CacheTTL(CACHE_TIMES.SHORT)
   @ApiOperation({ summary: 'Get user booking history with filters' })
   @ApiQuery({ name: 'search', required: false, description: 'Search term' })
   @ApiQuery({ name: 'status', required: false, description: 'Booking status' })
@@ -64,7 +80,7 @@ export class BookingController {
     status: HttpStatus.OK,
     description: 'Booking history retrieved successfully',
   })
-  async findUserBookings(@Query() filterDto: FilterBookingDto, @Request() req) {
+  async findAll(@Query() filterDto: FilterBookingDto, @Request() req) {
     const userId = req.user.userId;
     return await this.bookingService.findUserBookings(userId, filterDto);
   }
@@ -81,6 +97,9 @@ export class BookingController {
   }
 
   @Get(':id')
+  @ThrottleShort()
+  @CacheKey('booking-detail')
+  @CacheTTL(CACHE_TIMES.SHORT)
   @ApiOperation({ summary: 'Get booking by ID' })
   @ApiResponse({
     status: HttpStatus.OK,
