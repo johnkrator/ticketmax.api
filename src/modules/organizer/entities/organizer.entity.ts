@@ -98,6 +98,15 @@ export class VerificationDocuments {
   @Prop()
   taxDocumentUrl?: string;
 
+  @Prop({ type: Object })
+  idDocumentData?: any;
+
+  @Prop({ type: Object })
+  businessLicenseData?: any;
+
+  @Prop({ type: Object })
+  taxDocumentData?: any;
+
   @Prop({ default: Date.now })
   uploadedAt: Date;
 }

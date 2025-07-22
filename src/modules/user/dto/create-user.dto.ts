@@ -80,18 +80,20 @@ export class CreateUserDto {
   @IsEnum(UserRole)
   @Transform(({ value }) => {
     if (typeof value === 'string') {
+      // Convert to uppercase first to handle case-insensitive inputs
+      const upperValue = value.toUpperCase();
+
       // Handle case where client sends enum key names instead of values
       const roleMap = {
         USER: UserRole.USER,
         ADMIN: UserRole.ADMIN,
         ORGANIZER: UserRole.ORGANIZER,
-        user: UserRole.USER,
-        admin: UserRole.ADMIN,
-        organizer: UserRole.ORGANIZER,
       };
-      return roleMap[value] || value;
+
+      // Return the mapped value or the original if it's already valid
+      return roleMap[upperValue] || UserRole.USER; // Default to USER if invalid
     }
-    return value;
+    return value || UserRole.USER;
   })
   role?: UserRole;
 

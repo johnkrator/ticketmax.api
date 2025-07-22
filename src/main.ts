@@ -6,6 +6,7 @@ dotenv.config({ path: resolve(process.cwd(), '.env') });
 // Other modules
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
@@ -13,6 +14,18 @@ async function bootstrap() {
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     console.log('✅ Database connection established');
+
+    // Enable global validation with transformation
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
 
     app.enableCors({
       origin: true,

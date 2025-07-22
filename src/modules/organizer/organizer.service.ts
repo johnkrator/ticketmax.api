@@ -17,6 +17,8 @@ import {
   UpdateOrganizerStepDto,
 } from './dto/create-organizer.dto';
 import { OrganizerEmailService } from './organizer-email.service';
+import { FileStorageService } from './file-storage.service';
+import { UploadResult } from './cloud-storage.service';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -25,11 +27,13 @@ export class OrganizerService {
     @InjectModel(Organizer.name)
     private organizerModel: Model<OrganizerDocument>,
     private organizerEmailService: OrganizerEmailService,
+    private fileStorageService: FileStorageService,
   ) {}
 
   // Start organizer onboarding process
   async startOnboarding(
     createOrganizerDto: CreateOrganizerDto,
+    userId: string,
   ): Promise<{ organizerId: string; message: string }> {
     // Check if organizer already exists with this email
     const existingOrganizer = await this.organizerModel.findOne({
@@ -63,6 +67,7 @@ export class OrganizerService {
 
     const organizer = new this.organizerModel({
       ...createOrganizerDto,
+      userId: userId, // Add the userId field
       personalInformation: {
         ...createOrganizerDto.personalInformation,
         dateOfBirth: new Date(
@@ -77,7 +82,7 @@ export class OrganizerService {
 
     await organizer.save();
 
-    // Send welcome email
+    // Send a welcome email
     try {
       await this.organizerEmailService.sendOnboardingStartedEmail(
         organizer.personalInformation.email,
@@ -185,7 +190,7 @@ export class OrganizerService {
   async uploadVerificationDocuments(
     organizerId: string,
     files: {
-      idDocument?: any;
+      idDocument?: any; // Using 'any' to avoid Express.Multer.File type issues
       businessLicense?: any;
       taxDocument?: any;
     },
@@ -196,39 +201,101 @@ export class OrganizerService {
       throw new NotFoundException('Organizer not found');
     }
 
-    // In a real implementation, you would upload files to cloud storage (AWS S3, etc.)
-    // For now, we'll simulate file URLs
-    const verificationDocuments: any = {};
+    // Start with existing verification documents to preserve previously uploaded files
+    const verificationDocuments: any = organizer.verificationDocuments || {};
+    const uploadResults: UploadResult[] = [];
 
-    if (files.idDocument) {
-      verificationDocuments.idDocumentUrl = await this.uploadFileToStorage(
-        files.idDocument,
-      );
+    try {
+      if (files.idDocument) {
+        const result = await this.fileStorageService.uploadFile(
+          files.idDocument,
+          organizerId,
+          'id-document',
+        );
+        verificationDocuments.idDocumentUrl = result.url;
+        verificationDocuments.idDocumentData = result;
+        uploadResults.push(result);
+      }
+
+      if (files.businessLicense) {
+        const result = await this.fileStorageService.uploadFile(
+          files.businessLicense,
+          organizerId,
+          'business-license',
+        );
+        verificationDocuments.businessLicenseUrl = result.url;
+        verificationDocuments.businessLicenseData = result;
+        uploadResults.push(result);
+      }
+
+      if (files.taxDocument) {
+        const result = await this.fileStorageService.uploadFile(
+          files.taxDocument,
+          organizerId,
+          'tax-document',
+        );
+        verificationDocuments.taxDocumentUrl = result.url;
+        verificationDocuments.taxDocumentData = result;
+        uploadResults.push(result);
+      }
+
+      // Update the uploadedAt timestamp for the most recent upload
+      verificationDocuments.uploadedAt = new Date();
+
+      await this.organizerModel.findByIdAndUpdate(organizerId, {
+        verificationDocuments,
+        currentStep: Math.max(organizer.currentStep, 4), // Documents are step 4
+      });
+
+      return {
+        success: true,
+        message: 'Verification documents uploaded successfully',
+      };
+    } catch (error) {
+      // Clean up any uploaded files if there was an error
+      for (const result of uploadResults) {
+        try {
+          await this.fileStorageService.deleteFile(result);
+        } catch (deleteError) {
+          console.error('Error cleaning up uploaded file:', deleteError);
+        }
+      }
+      throw error;
+    }
+  }
+
+  // Generate signed URLs for accessing uploaded documents
+  async getDocumentSignedUrl(
+    organizerId: string,
+    documentType: 'id' | 'business' | 'tax',
+    expiresIn: number = 3600,
+  ): Promise<string> {
+    const organizer = await this.organizerModel.findById(organizerId);
+
+    if (!organizer || !organizer.verificationDocuments) {
+      throw new NotFoundException('Documents not found');
     }
 
-    if (files.businessLicense) {
-      verificationDocuments.businessLicenseUrl = await this.uploadFileToStorage(
-        files.businessLicense,
-      );
+    let uploadResult: UploadResult;
+    switch (documentType) {
+      case 'id':
+        uploadResult = organizer.verificationDocuments.idDocumentData;
+        break;
+      case 'business':
+        uploadResult = organizer.verificationDocuments.businessLicenseData;
+        break;
+      case 'tax':
+        uploadResult = organizer.verificationDocuments.taxDocumentData;
+        break;
+      default:
+        throw new BadRequestException('Invalid document type');
     }
 
-    if (files.taxDocument) {
-      verificationDocuments.taxDocumentUrl = await this.uploadFileToStorage(
-        files.taxDocument,
-      );
+    if (!uploadResult) {
+      throw new NotFoundException(`${documentType} document not found`);
     }
 
-    verificationDocuments.uploadedAt = new Date();
-
-    await this.organizerModel.findByIdAndUpdate(organizerId, {
-      verificationDocuments,
-      currentStep: Math.max(organizer.currentStep, 4), // Documents are step 4
-    });
-
-    return {
-      success: true,
-      message: 'Verification documents uploaded successfully',
-    };
+    return this.fileStorageService.generateSignedUrl(uploadResult, expiresIn);
   }
 
   // Get organizer onboarding status
@@ -237,6 +304,197 @@ export class OrganizerService {
 
     if (!organizer) {
       throw new NotFoundException('Organizer not found');
+    }
+
+    // Check document status
+    const documentStatus = {
+      idDocument: {
+        uploaded: !!organizer.verificationDocuments?.idDocumentUrl,
+        url: organizer.verificationDocuments?.idDocumentUrl || null,
+        status: organizer.verificationDocuments?.idDocumentUrl
+          ? 'uploaded'
+          : 'missing',
+      },
+      businessLicense: {
+        uploaded: !!organizer.verificationDocuments?.businessLicenseUrl,
+        url: organizer.verificationDocuments?.businessLicenseUrl || null,
+        status: organizer.verificationDocuments?.businessLicenseUrl
+          ? 'uploaded'
+          : 'missing',
+      },
+      taxDocument: {
+        uploaded: !!organizer.verificationDocuments?.taxDocumentUrl,
+        url: organizer.verificationDocuments?.taxDocumentUrl || null,
+        status: organizer.verificationDocuments?.taxDocumentUrl
+          ? 'uploaded'
+          : 'missing',
+      },
+    };
+
+    // Count uploaded and missing documents
+    const uploadedDocuments = Object.values(documentStatus).filter(
+      (doc) => doc.uploaded,
+    );
+    const missingDocuments = Object.values(documentStatus).filter(
+      (doc) => !doc.uploaded,
+    );
+
+    // Get list of missing document types
+    const missingDocumentTypes = Object.entries(documentStatus)
+      .filter(([_, doc]) => !doc.uploaded)
+      .map(([type, _]) => type);
+
+    // Determine overall document status
+    let overallDocumentStatus = 'pending';
+    if (uploadedDocuments.length === 0) {
+      overallDocumentStatus = 'not_started';
+    } else if (missingDocuments.length === 0) {
+      overallDocumentStatus = 'complete';
+    }
+
+    // Check completion status for each step
+    const stepRequirements = {
+      step1: {
+        name: 'Personal Information',
+        required: true,
+        completed: !!(
+          organizer.personalInformation?.firstName &&
+          organizer.personalInformation?.lastName &&
+          organizer.personalInformation?.email &&
+          organizer.personalInformation?.phone &&
+          organizer.personalInformation?.dateOfBirth
+        ),
+        missing: [] as string[],
+      },
+      step2: {
+        name: 'Organization Details',
+        required: true,
+        completed: !!(
+          organizer.organizationDetails?.organizationType &&
+          organizer.organizationDetails?.description
+        ),
+        missing: [] as string[],
+      },
+      step3: {
+        name: 'Address Information',
+        required: true,
+        completed: !!(
+          organizer.address?.address &&
+          organizer.address?.city &&
+          organizer.address?.state &&
+          organizer.address?.zipCode &&
+          organizer.address?.country
+        ),
+        missing: [] as string[],
+      },
+      step4: {
+        name: 'Verification Documents',
+        required: true,
+        completed: overallDocumentStatus === 'complete',
+        missing: missingDocumentTypes,
+      },
+      step5: {
+        name: 'Banking Information',
+        required: true,
+        completed: !!(
+          organizer.bankingInformation?.bankName &&
+          organizer.bankingInformation?.accountNumber &&
+          organizer.bankingInformation?.routingNumber &&
+          organizer.bankingInformation?.accountHolderName
+        ),
+        missing: [] as string[],
+      },
+      step6: {
+        name: 'Experience Details',
+        required: true,
+        completed: !!(
+          organizer.experienceDetails?.eventExperience &&
+          organizer.experienceDetails?.expectedEventVolume
+        ),
+        missing: [] as string[],
+      },
+    };
+
+    // Add specific missing items for each step
+    if (!stepRequirements.step1.completed) {
+      const missing: string[] = [];
+      if (!organizer.personalInformation?.firstName) missing.push('firstName');
+      if (!organizer.personalInformation?.lastName) missing.push('lastName');
+      if (!organizer.personalInformation?.email) missing.push('email');
+      if (!organizer.personalInformation?.phone) missing.push('phone');
+      if (!organizer.personalInformation?.dateOfBirth)
+        missing.push('dateOfBirth');
+      stepRequirements.step1.missing = missing;
+    }
+
+    if (!stepRequirements.step2.completed) {
+      const missing: string[] = [];
+      if (!organizer.organizationDetails?.organizationType)
+        missing.push('organizationType');
+      if (!organizer.organizationDetails?.description)
+        missing.push('description');
+      stepRequirements.step2.missing = missing;
+    }
+
+    if (!stepRequirements.step3.completed) {
+      const missing: string[] = [];
+      if (!organizer.address?.address) missing.push('address');
+      if (!organizer.address?.city) missing.push('city');
+      if (!organizer.address?.state) missing.push('state');
+      if (!organizer.address?.zipCode) missing.push('zipCode');
+      if (!organizer.address?.country) missing.push('country');
+      stepRequirements.step3.missing = missing;
+    }
+
+    if (!stepRequirements.step5.completed) {
+      const missing: string[] = [];
+      if (!organizer.bankingInformation?.bankName) missing.push('bankName');
+      if (!organizer.bankingInformation?.accountNumber)
+        missing.push('accountNumber');
+      if (!organizer.bankingInformation?.routingNumber)
+        missing.push('routingNumber');
+      if (!organizer.bankingInformation?.accountHolderName)
+        missing.push('accountHolderName');
+      stepRequirements.step5.missing = missing;
+    }
+
+    if (!stepRequirements.step6.completed) {
+      const missing: string[] = [];
+      if (!organizer.experienceDetails?.eventExperience)
+        missing.push('eventExperience');
+      if (!organizer.experienceDetails?.expectedEventVolume)
+        missing.push('expectedEventVolume');
+      stepRequirements.step6.missing = missing;
+    }
+
+    // Calculate overall completion
+    const completedSteps = Object.values(stepRequirements).filter(
+      (step) => step.completed,
+    ).length;
+    const totalSteps = Object.keys(stepRequirements).length;
+    const allStepsCompleted = completedSteps === totalSteps;
+
+    // Get pending requirements
+    const pendingRequirements = Object.entries(stepRequirements)
+      .filter(([_, step]) => !step.completed)
+      .map(([stepKey, step]) => ({
+        step: stepKey,
+        name: step.name,
+        missing: step.missing,
+      }));
+
+    // Auto-complete onboarding if all steps are done but not marked complete
+    if (allStepsCompleted && !organizer.isOnboardingComplete) {
+      await this.organizerModel.findByIdAndUpdate(organizerId, {
+        isOnboardingComplete: true,
+        currentStep: 6,
+        verificationStatus: VerificationStatus.UNDER_REVIEW,
+      });
+
+      // Update the local object for response
+      organizer.isOnboardingComplete = true;
+      organizer.currentStep = 6;
+      organizer.verificationStatus = VerificationStatus.UNDER_REVIEW;
     }
 
     return {
@@ -252,6 +510,25 @@ export class OrganizerService {
       hasExperienceDetails: !!organizer.experienceDetails,
       verifiedAt: organizer.verifiedAt,
       rejectionReason: organizer.rejectionReason,
+      // Enhanced completion tracking
+      completion: {
+        percentage: Math.round((completedSteps / totalSteps) * 100),
+        completedSteps,
+        totalSteps,
+        allStepsCompleted,
+        pendingRequirements,
+        stepRequirements,
+      },
+      // Enhanced document information
+      documents: {
+        status: overallDocumentStatus,
+        totalRequired: 3,
+        totalUploaded: uploadedDocuments.length,
+        totalMissing: missingDocuments.length,
+        missingDocumentTypes,
+        details: documentStatus,
+        uploadedAt: organizer.verificationDocuments?.uploadedAt || null,
+      },
     };
   }
 
@@ -374,11 +651,5 @@ export class OrganizerService {
     let encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     return iv.toString('hex') + ':' + encrypted;
-  }
-
-  private async uploadFileToStorage(file: any): Promise<string> {
-    // In a real implementation, upload to cloud storage (AWS S3, Cloudinary, etc.)
-    // Return the file URL
-    return `https://storage.ticketmax.com/documents/${Date.now()}-${file.originalname}`;
   }
 }
