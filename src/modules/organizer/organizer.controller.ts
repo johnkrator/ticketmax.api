@@ -403,51 +403,12 @@ export class OrganizerController {
     const signedUrl = await this.organizerService.getDocumentSignedUrl(
       organizerId,
       documentType,
-      3600, // 1 hour expiry
+      3600, // 1-hour expiry
     );
 
     return {
       url: signedUrl,
       expiresIn: 3600,
-    };
-  }
-
-  @Post('test-upload')
-  @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'testFile', maxCount: 1 }], {
-      limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
-      },
-    }),
-  )
-  @ApiOperation({ summary: 'Test file upload endpoint' })
-  @ApiConsumes('multipart/form-data')
-  async testUpload(
-    @UploadedFiles()
-    files: {
-      testFile?: any[];
-    },
-  ) {
-    console.log('Test upload - received files:', files);
-
-    if (!files || !files.testFile || files.testFile.length === 0) {
-      return {
-        success: false,
-        message: 'No file uploaded',
-        received: files,
-      };
-    }
-
-    const file = files.testFile[0];
-    return {
-      success: true,
-      message: 'File upload test successful',
-      fileInfo: {
-        originalname: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size,
-        fieldname: file.fieldname,
-      },
     };
   }
 }

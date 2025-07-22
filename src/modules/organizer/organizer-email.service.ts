@@ -1,20 +1,36 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class OrganizerEmailService {
+  private readonly logger = new Logger(OrganizerEmailService.name);
   private transporter: nodemailer.Transporter;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '465'),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+    this.initializeTransporter();
+  }
+
+  private async initializeTransporter() {
+    try {
+      this.transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '465'),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+
+      // Verify the connection
+      await this.transporter.verify();
+      this.logger.log(
+        'Email transporter initialized and verified successfully',
+      );
+    } catch (error) {
+      this.logger.error('Failed to initialize email transporter:', error);
+      throw error;
+    }
   }
 
   async sendOnboardingStartedEmail(
@@ -24,12 +40,12 @@ export class OrganizerEmailService {
     const mailOptions = {
       from: process.env.SMTP_FROM,
       to: email,
-      subject: 'Welcome to TicketVerse - Organizer Application Started',
+      subject: 'Welcome to TicketMax - Organizer Application Started',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #6B46C1;">Welcome to TicketVerse!</h1>
+          <h1 style="color: #6B46C1;">Welcome to TicketMax!</h1>
           <p>Dear ${organizerName},</p>
-          <p>Thank you for starting your organizer application with TicketVerse. Your journey to creating amazing events begins now!</p>
+          <p>Thank you for starting your organizer application with TicketMax. Your journey to creating amazing events begins now!</p>
           
           <h3>What's Next?</h3>
           <ul>
@@ -43,10 +59,10 @@ export class OrganizerEmailService {
           
           <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; margin: 20px 0;">
             <p><strong>Need Help?</strong></p>
-            <p>Contact our support team at support@ticketverse.com if you have any questions.</p>
+            <p>Contact our support team at support@ticketmax.com if you have any questions.</p>
           </div>
           
-          <p>Best regards,<br>The TicketVerse Team</p>
+          <p>Best regards,<br>The TicketMax Team</p>
         </div>
       `,
     };
@@ -61,12 +77,12 @@ export class OrganizerEmailService {
     const mailOptions = {
       from: process.env.SMTP_FROM,
       to: email,
-      subject: 'TicketVerse - Organizer Application Submitted',
+      subject: 'TicketMax - Organizer Application Submitted',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #6B46C1;">Application Submitted Successfully!</h1>
           <p>Dear ${organizerName},</p>
-          <p>Congratulations! You have successfully submitted your organizer application to TicketVerse.</p>
+          <p>Congratulations! You have successfully submitted your organizer application to TicketMax.</p>
           
           <div style="background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 15px; margin: 20px 0;">
             <h3 style="margin: 0; color: #1E40AF;">What Happens Next?</h3>
@@ -84,8 +100,8 @@ export class OrganizerEmailService {
             <li>All provided information is accurate</li>
           </ul>
           
-          <p>Thank you for choosing TicketVerse!</p>
-          <p>Best regards,<br>The TicketVerse Team</p>
+          <p>Thank you for choosing TicketMax!</p>
+          <p>Best regards,<br>The TicketMax Team</p>
         </div>
       `,
     };
@@ -94,49 +110,59 @@ export class OrganizerEmailService {
   }
 
   async sendApprovalEmail(email: string, organizerName: string): Promise<void> {
-    const mailOptions = {
-      from: process.env.SMTP_FROM,
-      to: email,
-      subject:
-        '🎉 Congratulations! Your TicketVerse Organizer Application is Approved',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #059669;">🎉 Welcome to TicketVerse!</h1>
-          <p>Dear ${organizerName},</p>
-          <p>Fantastic news! Your organizer application has been <strong>approved</strong>.</p>
-          
-          <div style="background-color: #ECFDF5; border-left: 4px solid #10B981; padding: 15px; margin: 20px 0;">
-            <h3 style="margin: 0; color: #065F46;">You can now:</h3>
-            <ul style="margin: 10px 0;">
-              <li>Create and publish events</li>
-              <li>Manage ticket sales</li>
-              <li>Access your organizer dashboard</li>
-              <li>Receive payments from ticket sales</li>
-            </ul>
-          </div>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL}/organizer/dashboard" 
-               style="background-color: #6B46C1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-              Access Your Dashboard
-            </a>
-          </div>
-          
-          <p>Ready to create your first event? Our platform makes it easy to:</p>
-          <ul>
-            <li>Set up event details and ticketing</li>
-            <li>Customize your event page</li>
-            <li>Track sales and attendees</li>
-            <li>Manage check-ins on event day</li>
-          </ul>
-          
-          <p>Welcome to the TicketVerse family!</p>
-          <p>Best regards,<br>The TicketVerse Team</p>
-        </div>
-      `,
-    };
+    try {
+      this.logger.log(`Attempting to send approval email to: ${email}`);
 
-    await this.transporter.sendMail(mailOptions);
+      const mailOptions = {
+        from: process.env.SMTP_FROM,
+        to: email,
+        subject:
+          '🎉 Congratulations! Your TicketMax Organizer Application is Approved',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #059669;">🎉 Welcome to TicketMax!</h1>
+            <p>Dear ${organizerName},</p>
+            <p>Fantastic news! Your organizer application has been <strong>approved</strong>.</p>
+            
+            <div style="background-color: #ECFDF5; border-left: 4px solid #10B981; padding: 15px; margin: 20px 0;">
+              <h3 style="margin: 0; color: #065F46;">You can now:</h3>
+              <ul style="margin: 10px 0;">
+                <li>Create and publish events</li>
+                <li>Manage ticket sales</li>
+                <li>Access your organizer dashboard</li>
+                <li>Receive payments from ticket sales</li>
+              </ul>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.FRONTEND_URL}/organizer/dashboard" 
+                 style="background-color: #6B46C1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                Access Your Dashboard
+              </a>
+            </div>
+            
+            <p>Ready to create your first event? Our platform makes it easy to:</p>
+            <ul>
+              <li>Set up event details and ticketing</li>
+              <li>Customize your event page</li>
+              <li>Track sales and attendees</li>
+              <li>Manage check-ins on event day</li>
+            </ul>
+            
+            <p>Welcome to the TicketMax family!</p>
+            <p>Best regards,<br>The TicketMax Team</p>
+          </div>
+        `,
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+      this.logger.log(
+        `Approval email sent successfully to ${email}. Message ID: ${result.messageId}`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send approval email to ${email}:`, error);
+      throw error;
+    }
   }
 
   async sendRejectionEmail(
@@ -147,12 +173,12 @@ export class OrganizerEmailService {
     const mailOptions = {
       from: process.env.SMTP_FROM,
       to: email,
-      subject: 'TicketVerse - Organizer Application Update',
+      subject: 'TicketMax - Organizer Application Update',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #DC2626;">Application Update Required</h1>
           <p>Dear ${organizerName},</p>
-          <p>Thank you for your interest in becoming a TicketVerse organizer. After reviewing your application, we need some additional information before we can proceed.</p>
+          <p>Thank you for your interest in becoming a TicketMax organizer. After reviewing your application, we need some additional information before we can proceed.</p>
           
           <div style="background-color: #FEF2F2; border-left: 4px solid #EF4444; padding: 15px; margin: 20px 0;">
             <h3 style="margin: 0; color: #991B1B;">Reason for Review:</h3>
@@ -175,7 +201,7 @@ export class OrganizerEmailService {
           
           <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
           
-          <p>Best regards,<br>The TicketVerse Team</p>
+          <p>Best regards,<br>The TicketMax Team</p>
         </div>
       `,
     };
@@ -187,7 +213,7 @@ export class OrganizerEmailService {
     organizerEmail: string,
     organizerName: string,
   ): Promise<void> {
-    const adminEmails = ['admin@ticketverse.com']; // Add admin emails here
+    const adminEmails = ['admin@ticketmax.com']; // Add admin emails here
 
     const mailOptions = {
       from: process.env.SMTP_FROM,
