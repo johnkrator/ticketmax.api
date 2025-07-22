@@ -29,10 +29,24 @@ export class BookingService {
     userId: string,
   ): Promise<Booking> {
     try {
+      // Validate UUID format for eventId
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(createBookingDto.eventId)) {
+        throw new BadRequestException(
+          `Invalid event ID format. Expected a UUID format, but received: ${createBookingDto.eventId}. ` +
+            'Please ensure you are using the correct event ID from the events list.',
+        );
+      }
+
       // Validate event exists and has available tickets
-      const event = await this.eventModel.findById(createBookingDto.eventId);
+      const event = await this.eventModel.findOne({
+        _id: createBookingDto.eventId,
+      });
       if (!event) {
-        throw new NotFoundException('Event not found');
+        throw new NotFoundException(
+          `Event with ID ${createBookingDto.eventId} not found. Please check the event ID and try again.`,
+        );
       }
 
       // Check if event is still active and not in the past
@@ -50,38 +64,55 @@ export class BookingService {
       const availableTickets = event.totalTickets - event.ticketsSold;
       if (availableTickets < createBookingDto.quantity) {
         throw new BadRequestException(
-          `Only ${availableTickets} tickets available. Requested: ${createBookingDto.quantity}`,
+          `Insufficient tickets available. Requested: ${createBookingDto.quantity}, Available: ${availableTickets}`,
         );
       }
 
-      // Calculate total amount (assuming price is per ticket)
-      const ticketPrice = parseFloat(event.price);
+      // Calculate total amount based on ticket type
+      const ticketType = createBookingDto.ticketType || 'general';
+      const basePrice = parseFloat(event.price); // Convert string price to number
+
+      if (isNaN(basePrice)) {
+        throw new BadRequestException('Invalid event price format');
+      }
+
+      let ticketPrice: number;
+
+      // Apply pricing multipliers based on ticket type
+      switch (ticketType) {
+        case 'vip':
+          ticketPrice = basePrice * 2; // VIP costs 2x base price
+          break;
+        case 'premium':
+          ticketPrice = basePrice * 1.5; // Premium costs 1.5x base price
+          break;
+        case 'early_bird':
+          ticketPrice = basePrice * 0.8; // Early bird costs 0.8x base price (20% discount)
+          break;
+        default:
+          ticketPrice = basePrice; // General admission
+      }
+
       const totalAmount = ticketPrice * createBookingDto.quantity;
 
-      // Generate unique booking reference
-      const bookingReference = this.generateBookingReference();
-
-      // Create booking
+      // Create the booking
       const booking = new this.bookingModel({
         userId: new Types.ObjectId(userId),
-        eventId: new Types.ObjectId(createBookingDto.eventId),
+        eventId: createBookingDto.eventId,
         quantity: createBookingDto.quantity,
         totalAmount,
+        ticketType,
+        status: BookingStatus.PENDING,
         customerEmail: createBookingDto.customerEmail,
         customerName: createBookingDto.customerName,
         customerPhone: createBookingDto.customerPhone,
-        ticketType: createBookingDto.ticketType || 'general',
-        bookingReference,
-        status: BookingStatus.PENDING,
-        metadata: {
-          specialRequests: createBookingDto.specialRequests,
-          source: 'web',
-        },
+        specialRequests: createBookingDto.specialRequests,
+        bookingReference: this.generateBookingReference(),
       });
 
       const savedBooking = await booking.save();
 
-      // Update event ticket count (reserve tickets)
+      // Update event ticket count
       await this.eventModel.findByIdAndUpdate(createBookingDto.eventId, {
         $inc: { ticketsSold: createBookingDto.quantity },
       });
@@ -95,7 +126,7 @@ export class BookingService {
         throw error;
       }
       throw new BadRequestException(
-        'Failed to create booking: ' + error.message,
+        `Failed to create booking: ${error.message}`,
       );
     }
   }

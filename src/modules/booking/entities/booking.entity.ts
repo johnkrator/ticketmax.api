@@ -63,6 +63,10 @@ export class Booking extends BaseEntity {
   @ApiProperty({ description: 'Customer phone number', required: false })
   customerPhone?: string;
 
+  @Prop({ trim: true })
+  @ApiProperty({ description: 'Special requests or notes', required: false })
+  specialRequests?: string;
+
   @Prop({ unique: true })
   @ApiProperty({ description: 'Unique booking reference' })
   bookingReference: string;
