@@ -8,6 +8,7 @@ import {
   IsEnum,
   Min,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { TicketType } from '../entities/booking.entity';
 
 export class CreateBookingDto {
@@ -44,6 +45,22 @@ export class CreateBookingDto {
   })
   @IsOptional()
   @IsEnum(TicketType)
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      // Convert to lowercase and handle common variations
+      const lowerValue = value.toLowerCase();
+      const ticketTypeMap: { [key: string]: TicketType } = {
+        general: TicketType.GENERAL,
+        vip: TicketType.VIP,
+        premium: TicketType.PREMIUM,
+        early_bird: TicketType.EARLY_BIRD,
+        earlybird: TicketType.EARLY_BIRD,
+        'early-bird': TicketType.EARLY_BIRD,
+      };
+      return ticketTypeMap[lowerValue] || TicketType.GENERAL;
+    }
+    return value || TicketType.GENERAL;
+  })
   ticketType?: TicketType;
 
   @ApiProperty({ description: 'Special requests or notes', required: false })
