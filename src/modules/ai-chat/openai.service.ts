@@ -68,21 +68,21 @@ export class OpenAiService {
 
     try {
       const prompt = `
-Analyze the following customer support message and extract:
-1. Intent (booking_inquiry, payment_issue, event_question, technical_support, complaint, general)
-2. Confidence (0-1)
-3. Category (booking, payment, event, technical, general)
-4. Any entities (dates, event names, amounts, etc.)
-
-Message: "${message}"
-
-Respond in JSON format only:
-{
-  "intent": "intent_name",
-  "confidence": 0.85,
-  "category": "category_name",
-  "entities": []
-}`;
+                      Analyze the following customer support message and extract:
+                      1. Intent (booking_inquiry, payment_issue, event_question, technical_support, complaint, general)
+                      2. Confidence (0-1)
+                      3. Category (booking, payment, event, technical, general)
+                      4. Any entities (dates, event names, amounts, etc.)
+                      
+                      Message: "${message}"
+                      
+                      Respond in JSON format only:
+                      {
+                        "intent": "intent_name",
+                        "confidence": 0.85,
+                        "category": "category_name",
+                        "entities": []
+      }`;
 
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
@@ -117,12 +117,12 @@ Respond in JSON format only:
 
     try {
       const prompt = `
-Based on the following context, generate 3 helpful quick reply suggestions for customer support:
-
-Context: ${JSON.stringify(context)}
-
-Return only a JSON array of strings:
-["suggestion 1", "suggestion 2", "suggestion 3"]`;
+                    Based on the following context, generate 3 helpful quick reply suggestions for customer support:
+                    
+                    Context: ${JSON.stringify(context)}
+                    
+                    Return only a JSON array of strings:
+                    ["suggestion 1", "suggestion 2", "suggestion 3"]`;
 
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
