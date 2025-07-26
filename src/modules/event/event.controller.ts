@@ -33,7 +33,7 @@ import {
   ThrottleShort,
 } from '../../configurations/throttler-config/throttler.decorators';
 
-@ApiTags('events')
+@ApiTags('Events')
 @Controller('events')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
