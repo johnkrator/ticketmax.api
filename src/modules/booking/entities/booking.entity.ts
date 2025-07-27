@@ -117,12 +117,82 @@ export class Booking extends BaseEntity {
   })
   cancelledBy?: Types.ObjectId;
 
+  @Prop({ type: String })
+  @ApiProperty({
+    description: 'Reason for cancellation',
+    required: false,
+  })
+  cancellationReason?: string;
+
   @Prop({ type: Number })
   @ApiProperty({
     description: 'Refund amount processed',
     required: false,
   })
   refundAmount?: number;
+
+  @Prop({ type: Boolean, default: false })
+  @ApiProperty({
+    description: 'Whether refund has been requested',
+    required: false,
+  })
+  refundRequested?: boolean;
+
+  @Prop({ type: Boolean, default: false })
+  @ApiProperty({
+    description: 'Whether refund has been processed',
+    required: false,
+  })
+  refundProcessed?: boolean;
+
+  @Prop({ type: Date })
+  @ApiProperty({
+    description: 'Date when refund was processed',
+    required: false,
+  })
+  refundProcessedAt?: Date;
+
+  @Prop({ type: Boolean, default: false })
+  @ApiProperty({
+    description: 'Whether refund was denied',
+    required: false,
+  })
+  refundDenied?: boolean;
+
+  @Prop({ type: String })
+  @ApiProperty({
+    description: 'Reason for refund denial',
+    required: false,
+  })
+  refundDenialReason?: string;
+
+  @Prop({ type: Boolean, default: false })
+  @ApiProperty({
+    description: 'Whether confirmation email has been sent',
+    required: false,
+  })
+  confirmationEmailSent?: boolean;
+
+  @Prop({ type: Date })
+  @ApiProperty({
+    description: 'Date when confirmation email was sent',
+    required: false,
+  })
+  confirmationEmailSentAt?: Date;
+
+  @Prop({ type: Boolean, default: false })
+  @ApiProperty({
+    description: 'Whether event reminder has been sent',
+    required: false,
+  })
+  reminderSent?: boolean;
+
+  @Prop({ type: Date })
+  @ApiProperty({
+    description: 'Date when reminder was sent',
+    required: false,
+  })
+  reminderSentAt?: Date;
 
   @Prop({ type: Number })
   @ApiProperty({
