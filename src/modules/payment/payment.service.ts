@@ -297,7 +297,7 @@ export class PaymentService {
 
     // Create payment record
     const payment = new this.paymentModel({
-      userId: new Types.ObjectId(userId),
+      userId: userId,
       bookingId: booking._id,
       amount: amountInKobo,
       currency: 'NGN',
@@ -392,9 +392,9 @@ export class PaymentService {
       );
     }
 
-    // Create payment record
+    // Create a payment record
     const payment = new this.paymentModel({
-      userId: new Types.ObjectId(userId),
+      userId: userId,
       bookingId: booking._id,
       amount: amountInNaira * 100, // Store in kobo for consistency
       currency: 'NGN',
@@ -745,7 +745,7 @@ export class PaymentService {
 
     const [payments, total] = await Promise.all([
       this.paymentModel
-        .find({ userId: new Types.ObjectId(userId) })
+        .find({ userId: userId })
         .populate({
           path: 'bookingId',
           populate: {
@@ -757,7 +757,7 @@ export class PaymentService {
         .skip(skip)
         .limit(limit)
         .exec(),
-      this.paymentModel.countDocuments({ userId: new Types.ObjectId(userId) }),
+      this.paymentModel.countDocuments({ userId: userId }),
     ]);
 
     return {

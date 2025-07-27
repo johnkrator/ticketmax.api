@@ -29,13 +29,13 @@ export enum PaymentGateway {
 
 @Schema({ timestamps: true })
 export class Payment extends BaseEntity {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: String, ref: 'User', required: true })
   @ApiProperty({ description: 'User who made the payment' })
-  userId: Types.ObjectId;
+  userId: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Booking', required: true })
+  @Prop({ type: String, ref: 'Booking', required: true })
   @ApiProperty({ description: 'Associated booking' })
-  bookingId: Types.ObjectId;
+  bookingId: string;
 
   @Prop({ required: true })
   @ApiProperty({
