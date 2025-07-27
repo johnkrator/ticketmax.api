@@ -35,13 +35,30 @@ import { CacheInterceptor } from '../../configurations/cache-config/cache.interc
 
 @ApiTags('Bookings')
 @Controller('bookings')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 @UseInterceptors(CacheInterceptor)
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
+  @Post('guest')
+  @ThrottleMedium()
+  @ApiOperation({
+    summary: 'Create a new booking as guest (no authentication required)',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Guest booking created successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid booking data or insufficient tickets',
+  })
+  async createGuestBooking(@Body() createBookingDto: CreateBookingDto) {
+    return await this.bookingService.createGuestBooking(createBookingDto);
+  }
+
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ThrottleMedium()
   @ApiOperation({ summary: 'Create a new booking' })
   @ApiResponse({
@@ -53,7 +70,7 @@ export class BookingController {
     description: 'Invalid booking data or insufficient tickets',
   })
   async create(@Body() createBookingDto: CreateBookingDto, @Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id; // Changed from req.user.userId to req.user.id
     return await this.bookingService.create(createBookingDto, userId);
   }
 
@@ -81,7 +98,7 @@ export class BookingController {
     description: 'Booking history retrieved successfully',
   })
   async findAll(@Query() filterDto: FilterBookingDto, @Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id; // Changed from req.user.userId to req.user.id
     return await this.bookingService.findUserBookings(userId, filterDto);
   }
 
@@ -92,7 +109,7 @@ export class BookingController {
     description: 'Booking statistics retrieved successfully',
   })
   async getBookingStats(@Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id; // Changed from req.user.userId to req.user.id
     return await this.bookingService.getBookingStats(userId);
   }
 
@@ -114,7 +131,7 @@ export class BookingController {
     description: 'Access denied to this booking',
   })
   async findOne(@Param('id') id: string, @Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id; // Changed from req.user.userId to req.user.id
     return await this.bookingService.findById(id, userId);
   }
 
@@ -155,7 +172,7 @@ export class BookingController {
     description: 'Cannot cancel booking (e.g., too close to event time)',
   })
   async cancelBooking(@Param('id') id: string, @Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id; // Changed from req.user.userId to req.user.id
     return await this.bookingService.cancelBooking(id, userId);
   }
 }

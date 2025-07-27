@@ -61,6 +61,10 @@ export class User extends BaseEntity {
   @ApiProperty({ description: 'Phone verification status' })
   phoneVerified: boolean;
 
+  @Prop({ default: false })
+  @ApiProperty({ description: 'Whether this is a guest user account' })
+  isGuest: boolean;
+
   @Prop()
   @ApiProperty({ description: 'Email verification token', required: false })
   emailVerificationToken?: string;

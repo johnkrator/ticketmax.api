@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { FilterBookingDto } from './dto/filter-booking.dto';
 import {
@@ -127,6 +128,56 @@ export class BookingService {
       }
       throw new BadRequestException(
         `Failed to create booking: ${error.message}`,
+      );
+    }
+  }
+
+  async createGuestBooking(
+    createBookingDto: CreateBookingDto,
+  ): Promise<Booking> {
+    try {
+      // Generate a unique guest user ID
+      const guestUserId = uuidv4();
+
+      // Create or find a guest user entry
+      let guestUser = await this.userModel.findOne({
+        email: createBookingDto.customerEmail,
+        isGuest: true,
+      });
+
+      if (!guestUser) {
+        // Split customer name into first and last name
+        const nameParts = createBookingDto.customerName.trim().split(' ');
+        const firstName = nameParts[0] || 'Guest';
+        const lastName = nameParts.slice(1).join(' ') || 'User';
+
+        // Create a new guest user
+        guestUser = new this.userModel({
+          _id: guestUserId,
+          email: createBookingDto.customerEmail,
+          firstName,
+          lastName,
+          phone: createBookingDto.customerPhone,
+          password: 'guest-user-no-password', // Placeholder password for guest users
+          isGuest: true,
+          role: 'user',
+          status: 'active',
+          emailVerified: false,
+        });
+        await guestUser.save();
+      }
+
+      // Use the existing create method logic but with guest user ID
+      return await this.create(createBookingDto, guestUser._id.toString());
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to create guest booking: ${error.message}`,
       );
     }
   }
