@@ -34,7 +34,7 @@ import {
 } from '../../configurations/throttler-config/throttler.decorators';
 import { AuthThrottlerGuard } from '../../configurations/throttler-config/throttler.guards';
 
-@ApiTags('user')
+@ApiTags('User')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}

@@ -142,6 +142,10 @@ export class EmailSendService {
     return this.sendEmail(email, subject, html, 'password_reset');
   }
 
+  async sendNotificationEmail(to: string, subject: string, html: string) {
+    return this.sendEmail(to, subject, html, 'notification');
+  }
+
   private async sendEmail(
     to: string,
     subject: string,

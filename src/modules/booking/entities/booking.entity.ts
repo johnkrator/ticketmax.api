@@ -96,13 +96,119 @@ export class Booking extends BaseEntity {
   })
   cancelledAt?: Date;
 
+  @Prop({ type: Date })
+  @ApiProperty({
+    description: 'Date when ticket was checked in at event',
+    required: false,
+  })
+  checkedInAt?: Date;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @ApiProperty({
+    description: 'User who checked in the ticket',
+    required: false,
+  })
+  checkedInBy?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @ApiProperty({
+    description: 'User who cancelled the booking',
+    required: false,
+  })
+  cancelledBy?: Types.ObjectId;
+
+  @Prop({ type: String })
+  @ApiProperty({
+    description: 'Reason for cancellation',
+    required: false,
+  })
+  cancellationReason?: string;
+
+  @Prop({ type: Number })
+  @ApiProperty({
+    description: 'Refund amount processed',
+    required: false,
+  })
+  refundAmount?: number;
+
+  @Prop({ type: Boolean, default: false })
+  @ApiProperty({
+    description: 'Whether refund has been requested',
+    required: false,
+  })
+  refundRequested?: boolean;
+
+  @Prop({ type: Boolean, default: false })
+  @ApiProperty({
+    description: 'Whether refund has been processed',
+    required: false,
+  })
+  refundProcessed?: boolean;
+
+  @Prop({ type: Date })
+  @ApiProperty({
+    description: 'Date when refund was processed',
+    required: false,
+  })
+  refundProcessedAt?: Date;
+
+  @Prop({ type: Boolean, default: false })
+  @ApiProperty({
+    description: 'Whether refund was denied',
+    required: false,
+  })
+  refundDenied?: boolean;
+
+  @Prop({ type: String })
+  @ApiProperty({
+    description: 'Reason for refund denial',
+    required: false,
+  })
+  refundDenialReason?: string;
+
+  @Prop({ type: Boolean, default: false })
+  @ApiProperty({
+    description: 'Whether confirmation email has been sent',
+    required: false,
+  })
+  confirmationEmailSent?: boolean;
+
+  @Prop({ type: Date })
+  @ApiProperty({
+    description: 'Date when confirmation email was sent',
+    required: false,
+  })
+  confirmationEmailSentAt?: Date;
+
+  @Prop({ type: Boolean, default: false })
+  @ApiProperty({
+    description: 'Whether event reminder has been sent',
+    required: false,
+  })
+  reminderSent?: boolean;
+
+  @Prop({ type: Date })
+  @ApiProperty({
+    description: 'Date when reminder was sent',
+    required: false,
+  })
+  reminderSentAt?: Date;
+
+  @Prop({ type: Number })
+  @ApiProperty({
+    description: 'Cancellation fee charged',
+    required: false,
+  })
+  cancellationFee?: number;
+
   @Prop({ type: Object })
   @ApiProperty({ description: 'Additional booking metadata', required: false })
   metadata?: {
     source?: string;
+    userAgent?: string;
+    ipAddress?: string;
     promoCode?: string;
-    specialRequests?: string;
-    ticketDeliveryMethod?: 'email' | 'pickup' | 'physical';
+    referrer?: string;
   };
 }
 

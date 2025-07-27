@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsDateString, IsEnum } from 'class-validator';
+import {
+  IsOptional,
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsString,
+  Min,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export enum DashboardPeriod {
   WEEK = 'week',
@@ -27,6 +35,16 @@ export class DashboardFiltersDto {
   @IsOptional()
   @IsEnum(DashboardPeriod)
   period?: DashboardPeriod;
+
+  @ApiProperty({ required: false, description: 'Event category filter' })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiProperty({ required: false, description: 'Event status filter' })
+  @IsOptional()
+  @IsString()
+  status?: string;
 }
 
 export class DashboardStatsDto {
@@ -56,6 +74,27 @@ export class DashboardStatsDto {
 
   @ApiProperty({ description: 'Last updated timestamp' })
   lastUpdated: Date;
+
+  @ApiProperty({ description: 'Number of unique customers' })
+  uniqueCustomers: number;
+
+  @ApiProperty({ description: 'Maximum order value' })
+  maxOrderValue: number;
+
+  @ApiProperty({ description: 'Minimum order value' })
+  minOrderValue: number;
+
+  @ApiProperty({ description: 'Revenue for current month' })
+  monthlyRevenue: number;
+
+  @ApiProperty({ description: 'Conversion rate percentage' })
+  conversionRate: number;
+
+  @ApiProperty({ description: 'Repeat customer rate percentage' })
+  repeatCustomerRate: number;
+
+  @ApiProperty({ description: 'Growth rate percentage' })
+  growthRate: number;
 }
 
 export class UserTicketDto {
@@ -118,6 +157,12 @@ export class UserTicketDto {
 
   @ApiProperty({ description: 'QR code data' })
   qrData: string;
+
+  @ApiProperty({ description: 'Whether ticket is refund eligible' })
+  refundEligible: boolean;
+
+  @ApiProperty({ description: 'Download URL for ticket PDF' })
+  downloadUrl: string;
 }
 
 export class UserEventDto {
@@ -186,6 +231,15 @@ export class UserEventDto {
 
   @ApiProperty({ description: 'Days until event (0 if past)' })
   daysUntilEvent: number;
+
+  @ApiProperty({ description: 'Whether event is currently active' })
+  isActive: boolean;
+
+  @ApiProperty({ description: 'Whether event is in the past' })
+  isPastEvent: boolean;
+
+  @ApiProperty({ description: 'Whether event is sold out' })
+  soldOut: boolean;
 }
 
 export class PaginationDto {
@@ -200,174 +254,292 @@ export class PaginationDto {
 
   @ApiProperty({ description: 'Total number of pages' })
   totalPages: number;
-}
 
-export class UserTicketsSummaryDto {
-  @ApiProperty({ description: 'Total amount spent' })
-  totalAmount: number;
+  @ApiProperty({ description: 'Whether there is a next page' })
+  hasNext: boolean;
 
-  @ApiProperty({ description: 'Total tickets purchased' })
-  totalTickets: number;
-
-  @ApiProperty({ description: 'Number of confirmed tickets' })
-  confirmedTickets: number;
-
-  @ApiProperty({ description: 'Number of pending tickets' })
-  pendingTickets: number;
-}
-
-export class UserEventsSummaryDto {
-  @ApiProperty({ description: 'Total revenue from all events' })
-  totalRevenue: number;
-
-  @ApiProperty({ description: 'Total tickets sold across all events' })
-  totalTicketsSold: number;
-
-  @ApiProperty({ description: 'Average tickets sold per event' })
-  averageTicketsSold: number;
-
-  @ApiProperty({ description: 'Number of upcoming events' })
-  upcomingEvents: number;
-
-  @ApiProperty({ description: 'Number of past events' })
-  pastEvents: number;
-}
-
-export class UserTicketsResponseDto {
-  @ApiProperty({ type: [UserTicketDto], description: 'Array of user tickets' })
-  tickets: UserTicketDto[];
-
-  @ApiProperty({ type: PaginationDto, description: 'Pagination information' })
-  pagination: PaginationDto;
-
-  @ApiProperty({ type: UserTicketsSummaryDto, description: 'Tickets summary' })
-  summary: UserTicketsSummaryDto;
-}
-
-export class UserEventsResponseDto {
-  @ApiProperty({ type: [UserEventDto], description: 'Array of user events' })
-  events: UserEventDto[];
-
-  @ApiProperty({ type: PaginationDto, description: 'Pagination information' })
-  pagination: PaginationDto;
-
-  @ApiProperty({ type: UserEventsSummaryDto, description: 'Events summary' })
-  summary: UserEventsSummaryDto;
-}
-
-export class RevenueDataDto {
-  @ApiProperty({ description: 'Month in YYYY-MM format' })
-  month: string;
-
-  @ApiProperty({ description: 'Revenue for the month' })
-  revenue: number;
-
-  @ApiProperty({ description: 'Tickets sold in the month' })
-  tickets: number;
-
-  @ApiProperty({ description: 'Number of orders in the month' })
-  orders: number;
-
-  @ApiProperty({ description: 'Average order value for the month' })
-  averageOrderValue: number;
-}
-
-export class TopEventDto {
-  @ApiProperty({ description: 'Event title' })
-  eventTitle: string;
-
-  @ApiProperty({ description: 'Event category' })
-  eventCategory: string;
-
-  @ApiProperty({ description: 'Event date' })
-  eventDate: string;
-
-  @ApiProperty({ description: 'Total revenue' })
-  revenue: number;
-
-  @ApiProperty({ description: 'Total tickets sold' })
-  tickets: number;
-
-  @ApiProperty({ description: 'Total number of orders' })
-  orders: number;
-
-  @ApiProperty({ description: 'Average order value' })
-  averageOrderValue: number;
-}
-
-export class SalesTrendDto {
-  @ApiProperty({ description: 'Date in YYYY-MM-DD format' })
-  date: string;
-
-  @ApiProperty({ description: 'Revenue for the day' })
-  revenue: number;
-
-  @ApiProperty({ description: 'Tickets sold on the day' })
-  tickets: number;
-
-  @ApiProperty({ description: 'Number of orders on the day' })
-  orders: number;
-}
-
-export class CategoryPerformanceDto {
-  @ApiProperty({ description: 'Event category' })
-  category: string;
-
-  @ApiProperty({ description: 'Total revenue for category' })
-  revenue: number;
-
-  @ApiProperty({ description: 'Total tickets sold for category' })
-  tickets: number;
-
-  @ApiProperty({ description: 'Number of events in category' })
-  eventCount: number;
+  @ApiProperty({ description: 'Whether there is a previous page' })
+  hasPrev: boolean;
 }
 
 export class AnalyticsDto {
-  @ApiProperty({ type: [RevenueDataDto], description: 'Revenue data by month' })
-  revenueByMonth: RevenueDataDto[];
+  @ApiProperty({ description: 'Total revenue' })
+  totalRevenue: number;
 
-  @ApiProperty({ type: [TopEventDto], description: 'Top performing events' })
-  topEvents: TopEventDto[];
+  @ApiProperty({ description: 'Total tickets sold' })
+  totalTicketsSold: number;
 
-  @ApiProperty({ type: [SalesTrendDto], description: 'Daily sales trends' })
-  salesTrends: SalesTrendDto[];
+  @ApiProperty({ description: 'Number of events' })
+  eventCount: number;
 
-  @ApiProperty({
-    type: [CategoryPerformanceDto],
-    description: 'Category performance data',
-  })
-  categoryPerformance: CategoryPerformanceDto[];
+  @ApiProperty({ description: 'Average revenue per event' })
+  averageRevenuePerEvent: number;
+
+  @ApiProperty({ description: 'Period for analytics' })
+  period: string;
+
+  @ApiProperty({ description: 'Analytics generation date' })
+  generatedAt: Date;
 }
 
-export class ActivityDto {
-  @ApiProperty({ description: 'Activity ID' })
-  id: string;
+export class RevenueAnalyticsDto {
+  @ApiProperty({ description: 'Total revenue for period' })
+  totalRevenue: number;
 
-  @ApiProperty({ description: 'Activity type' })
-  type: string;
+  @ApiProperty({ description: 'Revenue growth percentage' })
+  growthPercentage: number;
 
-  @ApiProperty({ description: 'Activity title' })
-  title: string;
+  @ApiProperty({ description: 'Revenue by category breakdown' })
+  revenueByCategory: {
+    category: string;
+    revenue: number;
+    percentage: number;
+  }[];
 
-  @ApiProperty({ description: 'Activity description' })
-  description: string;
+  @ApiProperty({ description: 'Monthly revenue trend' })
+  monthlyTrend: { month: string; revenue: number }[];
 
-  @ApiProperty({ description: 'Activity timestamp' })
-  timestamp: Date;
+  @ApiProperty({ description: 'Revenue forecast for next period' })
+  forecast: number;
 
-  @ApiProperty({ description: 'Activity status' })
-  status: string;
+  @ApiProperty({ description: 'Peak revenue month' })
+  peakMonth: string;
 
-  @ApiProperty({ description: 'Additional metadata', required: false })
-  metadata?: {
-    amount?: number;
-    ticketType?: string;
-    eventCategory?: string;
-    category?: string;
-    totalTickets?: number;
-    price?: string;
-    refundAmount?: number;
-    quantity?: number;
+  @ApiProperty({ description: 'Average monthly revenue' })
+  averageMonthlyRevenue: number;
+
+  @ApiProperty({ description: 'Revenue per ticket average' })
+  averageRevenuePerTicket: number;
+}
+
+export class EventPerformanceDto {
+  @ApiProperty({ description: 'Event ID' })
+  eventId: string;
+
+  @ApiProperty({ description: 'Event title' })
+  eventTitle: string;
+
+  @ApiProperty({ description: 'Performance score (0-100)' })
+  performanceScore: number;
+
+  @ApiProperty({ description: 'Sales velocity (tickets per day)' })
+  salesVelocity: number;
+
+  @ApiProperty({ description: 'Conversion rate percentage' })
+  conversionRate: number;
+
+  @ApiProperty({ description: 'Revenue per visitor' })
+  revenuePerVisitor: number;
+
+  @ApiProperty({ description: 'Time to sell out (days)' })
+  timeToSellOut?: number;
+
+  @ApiProperty({ description: 'Attendance rate percentage' })
+  attendanceRate: number;
+
+  @ApiProperty({ description: 'Customer satisfaction score' })
+  satisfactionScore?: number;
+
+  @ApiProperty({ description: 'Refund rate percentage' })
+  refundRate: number;
+
+  @ApiProperty({ description: 'Marketing ROI' })
+  marketingROI?: number;
+}
+
+export class CustomerInsightsDto {
+  @ApiProperty({ description: 'Total unique customers' })
+  totalCustomers: number;
+
+  @ApiProperty({ description: 'New customers this period' })
+  newCustomers: number;
+
+  @ApiProperty({ description: 'Returning customers' })
+  returningCustomers: number;
+
+  @ApiProperty({ description: 'Customer retention rate' })
+  retentionRate: number;
+
+  @ApiProperty({ description: 'Average customer lifetime value' })
+  averageLifetimeValue: number;
+
+  @ApiProperty({ description: 'Average tickets per customer' })
+  averageTicketsPerCustomer: number;
+
+  @ApiProperty({ description: 'Top customer segments' })
+  topSegments: { segment: string; count: number; revenue: number }[];
+
+  @ApiProperty({ description: 'Customer demographics' })
+  demographics: {
+    ageGroups: { range: string; percentage: number }[];
+    genderDistribution: { gender: string; percentage: number }[];
+    locationDistribution: { city: string; percentage: number }[];
   };
+
+  @ApiProperty({ description: 'Customer behavior patterns' })
+  behaviorPatterns: {
+    preferredEventTypes: string[];
+    averageDaysBetweenPurchases: number;
+    mostActiveDay: string;
+    mostActiveHour: number;
+  };
+}
+
+export class SalesTimelineDto {
+  @ApiProperty({ description: 'Date of sales data' })
+  date: string;
+
+  @ApiProperty({ description: 'Revenue for the date' })
+  revenue: number;
+
+  @ApiProperty({ description: 'Tickets sold for the date' })
+  ticketsSold: number;
+
+  @ApiProperty({ description: 'Number of orders for the date' })
+  orderCount: number;
+
+  @ApiProperty({ description: 'Average order value for the date' })
+  averageOrderValue: number;
+}
+
+export class TopCategoriesDto {
+  @ApiProperty({ description: 'Category name' })
+  category: string;
+
+  @ApiProperty({ description: 'Total revenue from category' })
+  revenue: number;
+
+  @ApiProperty({ description: 'Total tickets sold in category' })
+  ticketsSold: number;
+
+  @ApiProperty({ description: 'Number of events in category' })
+  eventCount: number;
+
+  @ApiProperty({ description: 'Average order value for category' })
+  averageOrderValue: number;
+
+  @ApiProperty({ description: 'Market share percentage' })
+  marketShare: number;
+}
+
+export class BookingTrendsDto {
+  @ApiProperty({ description: 'Trend period identifier' })
+  period: string;
+
+  @ApiProperty({ description: 'Total bookings in period' })
+  bookings: number;
+
+  @ApiProperty({ description: 'Booking growth percentage' })
+  growthPercentage: number;
+
+  @ApiProperty({ description: 'Peak booking day' })
+  peakDay: string;
+
+  @ApiProperty({ description: 'Average bookings per day' })
+  averageBookingsPerDay: number;
+
+  @ApiProperty({ description: 'Cancellation rate' })
+  cancellationRate: number;
+
+  @ApiProperty({ description: 'Most popular booking time' })
+  popularBookingTime: { hour: number; percentage: number };
+}
+
+// Query DTOs for API endpoints
+export class GetTicketsQueryDto {
+  @ApiProperty({ required: false, default: 1, description: 'Page number' })
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value))
+  @IsNumber()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiProperty({ required: false, default: 10, description: 'Items per page' })
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value))
+  @IsNumber()
+  @Min(1)
+  limit?: number = 10;
+
+  @ApiProperty({ required: false, description: 'Filter by booking status' })
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @ApiProperty({ required: false, description: 'Filter by event ID' })
+  @IsOptional()
+  @IsString()
+  eventId?: string;
+}
+
+export class GetEventsQueryDto {
+  @ApiProperty({ required: false, default: 1, description: 'Page number' })
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value))
+  @IsNumber()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiProperty({ required: false, default: 10, description: 'Items per page' })
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value))
+  @IsNumber()
+  @Min(1)
+  limit?: number = 10;
+
+  @ApiProperty({ required: false, description: 'Start date filter' })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiProperty({ required: false, description: 'End date filter' })
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @ApiProperty({
+    enum: DashboardPeriod,
+    required: false,
+    description: 'Period filter',
+  })
+  @IsOptional()
+  @IsEnum(DashboardPeriod)
+  period?: DashboardPeriod;
+
+  @ApiProperty({ required: false, description: 'Category filter' })
+  @IsOptional()
+  @IsString()
+  category?: string;
+}
+
+export class GetAnalyticsQueryDto {
+  @ApiProperty({
+    enum: DashboardPeriod,
+    required: false,
+    default: DashboardPeriod.MONTH,
+  })
+  @IsOptional()
+  @IsEnum(DashboardPeriod)
+  period?: DashboardPeriod = DashboardPeriod.MONTH;
+
+  @ApiProperty({
+    required: false,
+    description: 'Specific event ID for analytics',
+  })
+  @IsOptional()
+  @IsString()
+  eventId?: string;
+}
+
+export class GetTimelineQueryDto {
+  @ApiProperty({
+    required: false,
+    default: 30,
+    description: 'Number of days to analyze',
+  })
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value))
+  @IsNumber()
+  @Min(1)
+  days?: number = 30;
 }

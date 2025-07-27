@@ -11,9 +11,11 @@ import { AdminSeedModule } from './modules/admin-seed/admin-seed.module';
 import { BookingModule } from './modules/booking/booking.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { BackgroundServicesModule } from './modules/background-services/background-services.module';
 import { EmailSendModule } from './middleware/email-send/email-send.module';
 import { SmsSendModule } from './middleware/sms-send/sms-send.module';
 import { NotificationModule } from './middleware/notification/notification.module';
+import { AiChatModule } from './modules/ai-chat/ai-chat.module';
 import { CacheConfigModule } from './configurations/cache-config/cache.config';
 import { ThrottlerConfigModule } from './configurations/throttler-config/throttler.config';
 import { StandardThrottlerGuard } from './configurations/throttler-config/throttler.guards';
@@ -35,9 +37,11 @@ import { StandardThrottlerGuard } from './configurations/throttler-config/thrott
     BookingModule,
     PaymentModule,
     DashboardModule,
+    BackgroundServicesModule,
     EmailSendModule,
     SmsSendModule,
     NotificationModule,
+    AiChatModule,
   ],
   controllers: [AppController],
   providers: [

@@ -12,7 +12,7 @@ class TestEmailDto {
   name?: string;
 }
 
-@ApiTags('email')
+@ApiTags('Email')
 @Controller('email-send')
 export class EmailSendController {
   constructor(private readonly emailSendService: EmailSendService) {}
