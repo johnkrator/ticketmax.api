@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -768,9 +768,28 @@ export class PaymentService {
     };
   }
 
+  async getPaymentById(paymentId: string, userId: string): Promise<Payment> {
+    const payment = await this.paymentModel
+      .findOne({ _id: paymentId, userId: userId })
+      .populate({
+        path: 'bookingId',
+        populate: {
+          path: 'eventId',
+          select: 'title date time location organizer',
+        },
+      })
+      .exec();
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found or access denied');
+    }
+
+    return payment;
+  }
+
   async getPaymentStats(userId: string): Promise<any> {
     const stats = await this.paymentModel.aggregate([
-      { $match: { userId: new Types.ObjectId(userId) } },
+      { $match: { userId: userId } },
       {
         $group: {
           _id: '$status',
@@ -781,12 +800,12 @@ export class PaymentService {
     ]);
 
     const totalPayments = await this.paymentModel.countDocuments({
-      userId: new Types.ObjectId(userId),
+      userId: userId,
     });
     const totalSpent = await this.paymentModel.aggregate([
       {
         $match: {
-          userId: new Types.ObjectId(userId),
+          userId: userId,
           status: PaymentStatus.SUCCESS,
         },
       },
@@ -794,15 +813,9 @@ export class PaymentService {
     ]);
 
     return {
+      stats,
       totalPayments,
-      totalSpent: (totalSpent[0]?.total || 0) / 100, // Convert back from kobo to naira
-      byStatus: stats.reduce((acc, stat) => {
-        acc[stat._id] = {
-          count: stat.count,
-          amount: stat.totalAmount / 100, // Convert back from kobo to naira
-        };
-        return acc;
-      }, {}),
+      totalSpent: totalSpent[0]?.total || 0,
     };
   }
 

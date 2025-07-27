@@ -311,9 +311,7 @@ export class PaymentController {
     description: 'Payment not found',
   })
   async getPaymentDetails(@Param('id') paymentId: string, @Request() req) {
-    const userId = req.user.userId;
-    // This would need to be implemented in the service
-    // return await this.paymentService.getPaymentById(paymentId, userId);
-    throw new BadRequestException('Method not implemented yet');
+    const userId = req.user.id;
+    return await this.paymentService.getPaymentById(paymentId, userId);
   }
 }
