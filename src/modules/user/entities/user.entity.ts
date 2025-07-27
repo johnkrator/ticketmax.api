@@ -107,6 +107,26 @@ export class User extends BaseEntity {
     country: string;
   };
 
+  @Prop([
+    {
+      provider: {
+        type: String,
+        enum: ['google', 'github', 'facebook', 'apple'],
+      },
+      providerId: { type: String },
+      connectedAt: { type: Date, default: Date.now },
+    },
+  ])
+  @ApiProperty({
+    description: 'OAuth providers linked to this account',
+    required: false,
+  })
+  oauthProviders?: {
+    provider: 'google' | 'github' | 'facebook' | 'apple';
+    providerId: string;
+    connectedAt: Date;
+  }[];
+
   @ApiProperty({ description: 'Full name' })
   get fullName(): string {
     return `${this.firstName} ${this.lastName}`;
