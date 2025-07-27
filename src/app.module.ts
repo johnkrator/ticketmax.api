@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { EventModule } from './modules/event/event.module';
 import { OrganizerModule } from './modules/organizer/organizer.module';
 import { AdminSeedModule } from './modules/admin-seed/admin-seed.module';
@@ -31,6 +32,7 @@ import { StandardThrottlerGuard } from './configurations/throttler-config/thrott
       process.env.MONGODB_URI || 'mongodb://localhost:27017/ticketmax',
     ),
     UserModule,
+    AuthModule,
     EventModule,
     OrganizerModule,
     AdminSeedModule,

@@ -19,17 +19,23 @@ export enum PaymentMethod {
   USSD = 'ussd',
   QR = 'qr',
   MOBILE_MONEY = 'mobile_money',
+  BANK = 'bank',
+}
+
+export enum PaymentGateway {
+  PAYSTACK = 'paystack',
+  FLUTTERWAVE = 'flutterwave',
 }
 
 @Schema({ timestamps: true })
 export class Payment extends BaseEntity {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: String, ref: 'User', required: true })
   @ApiProperty({ description: 'User who made the payment' })
-  userId: Types.ObjectId;
+  userId: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Booking', required: true })
+  @Prop({ type: String, ref: 'Booking', required: true })
   @ApiProperty({ description: 'Associated booking' })
-  bookingId: Types.ObjectId;
+  bookingId: string;
 
   @Prop({ required: true })
   @ApiProperty({
@@ -49,66 +55,97 @@ export class Payment extends BaseEntity {
   status: PaymentStatus;
 
   @Prop({
-    enum: Object.values(PaymentMethod),
+    enum: Object.values(PaymentGateway),
+    required: true,
   })
-  @ApiProperty({ enum: PaymentMethod, description: 'Payment method used' })
-  paymentMethod?: PaymentMethod;
+  @ApiProperty({ enum: PaymentGateway, description: 'Payment gateway used' })
+  gateway: PaymentGateway;
 
-  @Prop({ required: true, unique: true })
-  @ApiProperty({ description: 'Paystack transaction reference' })
-  paystackReference: string;
+  // Paystack specific fields
+  @Prop({ required: false })
+  @ApiProperty({
+    description: 'Paystack transaction reference',
+    required: false,
+  })
+  paystackReference?: string;
 
-  @Prop()
+  @Prop({ required: false })
   @ApiProperty({ description: 'Paystack transaction ID', required: false })
   paystackTransactionId?: string;
 
-  @Prop()
+  @Prop({ type: Object, required: false })
+  @ApiProperty({ description: 'Raw Paystack response data', required: false })
+  paystackData?: any;
+
+  // Flutterwave specific fields
+  @Prop({ required: false })
   @ApiProperty({
-    description: 'Paystack authorization code for future charges',
+    description: 'Flutterwave transaction reference',
     required: false,
   })
-  authorizationCode?: string;
+  flutterwaveReference?: string;
 
-  @Prop({ required: true, trim: true })
-  @ApiProperty({ description: 'Customer email' })
+  @Prop({ required: false })
+  @ApiProperty({ description: 'Flutterwave transaction ID', required: false })
+  flutterwaveTransactionId?: string;
+
+  @Prop({ type: Object, required: false })
+  @ApiProperty({
+    description: 'Raw Flutterwave response data',
+    required: false,
+  })
+  flutterwaveData?: any;
+
+  // Common fields for both gateways
+  @Prop({ required: true })
+  @ApiProperty({ description: 'Customer email address' })
   customerEmail: string;
 
-  @Prop({ required: true, trim: true })
-  @ApiProperty({ description: 'Customer name' })
+  @Prop({ required: true })
+  @ApiProperty({ description: 'Customer full name' })
   customerName: string;
 
-  @Prop({ trim: true })
-  @ApiProperty({ description: 'Customer phone', required: false })
+  @Prop({ required: false })
+  @ApiProperty({ description: 'Customer phone number', required: false })
   customerPhone?: string;
 
-  @Prop({ type: Date })
+  @Prop({ enum: Object.values(PaymentMethod), required: false })
+  @ApiProperty({
+    enum: PaymentMethod,
+    description: 'Payment method used',
+    required: false,
+  })
+  paymentMethod?: PaymentMethod;
+
+  @Prop({ required: false })
   @ApiProperty({
     description: 'Date when payment was completed',
     required: false,
   })
   paidAt?: Date;
 
-  @Prop()
-  @ApiProperty({ description: 'Payment gateway fees', required: false })
-  gatewayFees?: number;
-
-  @Prop()
+  @Prop({ required: false })
   @ApiProperty({
-    description: 'Failure reason if payment failed',
+    description: 'Authorization code for card payments',
     required: false,
   })
+  authorizationCode?: string;
+
+  @Prop({ required: false })
+  @ApiProperty({ description: 'Gateway fees charged', required: false })
+  gatewayFees?: number;
+
+  @Prop({ required: false })
+  @ApiProperty({ description: 'Reason for payment failure', required: false })
   failureReason?: string;
 
-  @Prop({ type: Object })
-  @ApiProperty({ description: 'Raw Paystack webhook data', required: false })
-  paystackData?: any;
-
-  @Prop({ type: Object })
-  @ApiProperty({ description: 'Additional payment metadata', required: false })
+  @Prop({ type: Object, required: false })
+  @ApiProperty({ description: 'Additional metadata', required: false })
   metadata?: {
     ipAddress?: string;
     userAgent?: string;
     source?: string;
+    [key: string]: any;
   };
 }
 
