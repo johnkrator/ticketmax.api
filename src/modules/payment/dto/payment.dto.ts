@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
-  Min,
+  IsEnum,
 } from 'class-validator';
+import { PaymentGateway } from '../entities/payment.entity';
 
 export class InitiatePaymentDto {
   @ApiProperty({ description: 'Booking ID to pay for' })
@@ -29,6 +29,15 @@ export class InitiatePaymentDto {
   @IsString()
   customerPhone?: string;
 
+  @ApiProperty({
+    description: 'Payment gateway to use',
+    enum: PaymentGateway,
+    default: PaymentGateway.PAYSTACK,
+  })
+  @IsOptional()
+  @IsEnum(PaymentGateway)
+  gateway?: PaymentGateway = PaymentGateway.PAYSTACK;
+
   @ApiProperty({ description: 'Success redirect URL', required: false })
   @IsOptional()
   @IsString()
@@ -41,12 +50,12 @@ export class InitiatePaymentDto {
 }
 
 export class PaymentWebhookDto {
-  @ApiProperty({ description: 'Event type from Paystack' })
+  @ApiProperty({ description: 'Event type from payment gateway' })
   @IsNotEmpty()
   @IsString()
   event: string;
 
-  @ApiProperty({ description: 'Webhook data from Paystack' })
+  @ApiProperty({ description: 'Webhook data from payment gateway' })
   @IsNotEmpty()
   data: any;
 }

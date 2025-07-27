@@ -97,7 +97,7 @@ export class BookingService {
 
       // Create the booking
       const booking = new this.bookingModel({
-        userId: new Types.ObjectId(userId),
+        userId: userId, // Fixed: Store userId as string (UUID format) instead of converting to ObjectId
         eventId: createBookingDto.eventId,
         quantity: createBookingDto.quantity,
         totalAmount,
