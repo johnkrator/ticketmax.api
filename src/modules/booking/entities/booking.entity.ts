@@ -96,13 +96,49 @@ export class Booking extends BaseEntity {
   })
   cancelledAt?: Date;
 
+  @Prop({ type: Date })
+  @ApiProperty({
+    description: 'Date when ticket was checked in at event',
+    required: false,
+  })
+  checkedInAt?: Date;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @ApiProperty({
+    description: 'User who checked in the ticket',
+    required: false,
+  })
+  checkedInBy?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @ApiProperty({
+    description: 'User who cancelled the booking',
+    required: false,
+  })
+  cancelledBy?: Types.ObjectId;
+
+  @Prop({ type: Number })
+  @ApiProperty({
+    description: 'Refund amount processed',
+    required: false,
+  })
+  refundAmount?: number;
+
+  @Prop({ type: Number })
+  @ApiProperty({
+    description: 'Cancellation fee charged',
+    required: false,
+  })
+  cancellationFee?: number;
+
   @Prop({ type: Object })
   @ApiProperty({ description: 'Additional booking metadata', required: false })
   metadata?: {
     source?: string;
+    userAgent?: string;
+    ipAddress?: string;
     promoCode?: string;
-    specialRequests?: string;
-    ticketDeliveryMethod?: 'email' | 'pickup' | 'physical';
+    referrer?: string;
   };
 }
 
