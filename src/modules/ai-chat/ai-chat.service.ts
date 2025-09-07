@@ -9,7 +9,8 @@ import {
   ChatMessage,
   ChatMessageDocument,
 } from './entities/chat-message.entity';
-import { OpenAiService } from './openai.service';
+import { ClaudeService } from './claude.service';
+import { CustomAiService } from './custom-ai.service';
 
 @Injectable()
 export class AiChatService {
@@ -20,7 +21,8 @@ export class AiChatService {
     private chatSessionModel: Model<ChatSessionDocument>,
     @InjectModel(ChatMessage.name)
     private chatMessageModel: Model<ChatMessageDocument>,
-    private openAiService: OpenAiService,
+    private claudeService: ClaudeService,
+    private customAiService: CustomAiService,
   ) {}
 
   async createChatSession(
@@ -67,10 +69,22 @@ export class AiChatService {
   ): Promise<ChatMessage> {
     const session = await this.getChatSession(sessionId);
 
-    // Analyze intent for user messages
+    // Analyze intent for user messages using custom AI first, fallback to Claude
     let metadata = {};
     if (sender === 'user') {
-      const analysis = await this.openAiService.analyzeIntent(content);
+      let analysis;
+      try {
+        // Try custom AI service first
+        analysis = await this.customAiService.analyzeIntent(content);
+      } catch (error) {
+        this.logger.warn(
+          'Custom AI service failed, falling back to Claude',
+          error,
+        );
+        // Fallback to Claude service
+        analysis = await this.claudeService.analyzeIntent(content);
+      }
+
       metadata = {
         confidence: analysis.confidence,
         intent: analysis.intent,
@@ -128,15 +142,34 @@ export class AiChatService {
     // Add current user message
     conversationHistory.push({ role: 'user', content: userMessage });
 
-    // Generate AI response
-    const aiResponse = await this.openAiService.generateResponse(
-      conversationHistory,
-      {
-        sessionCategory: session.category,
-        userId: session.userId,
-        userEmail: session.userEmail,
-      },
-    );
+    // Generate AI response using custom AI first, fallback to Claude
+    let aiResponse: string;
+    try {
+      // Try custom AI service first
+      aiResponse = await this.customAiService.generateResponse(
+        conversationHistory,
+        {
+          sessionId,
+          sessionCategory: session.category,
+          userId: session.userId,
+          userEmail: session.userEmail,
+        },
+      );
+    } catch (error) {
+      this.logger.warn(
+        'Custom AI service failed, falling back to Claude',
+        error,
+      );
+      // Fallback to Claude service
+      aiResponse = await this.claudeService.generateResponse(
+        conversationHistory,
+        {
+          sessionCategory: session.category,
+          userId: session.userId,
+          userEmail: session.userEmail,
+        },
+      );
+    }
 
     // Save AI response
     return this.sendMessage(sessionId, aiResponse, 'ai');
@@ -208,10 +241,25 @@ export class AiChatService {
 
   async getSuggestions(sessionId: string): Promise<string[]> {
     const session = await this.getChatSession(sessionId);
-    return this.openAiService.generateSuggestions({
-      category: session.category,
-      status: session.status,
-    });
+
+    try {
+      // Try custom AI service first
+      return await this.customAiService.generateSuggestions({
+        sessionId,
+        category: session.category,
+        status: session.status,
+      });
+    } catch (error) {
+      this.logger.warn(
+        'Custom AI service failed, falling back to Claude for suggestions',
+        error,
+      );
+      // Fallback to Claude service
+      return this.claudeService.generateSuggestions({
+        category: session.category,
+        status: session.status,
+      });
+    }
   }
 
   async markMessagesAsRead(sessionId: string, _userId: string): Promise<void> {

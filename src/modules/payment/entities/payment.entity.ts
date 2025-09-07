@@ -208,6 +208,10 @@ PaymentSchema.pre(
 
 // Add indexes for better query performance
 PaymentSchema.index({ userId: 1, createdAt: -1 });
-PaymentSchema.index({ paystackReference: 1 }, { unique: true });
+PaymentSchema.index({ paystackReference: 1 }, { unique: true, sparse: true });
+PaymentSchema.index(
+  { flutterwaveReference: 1 },
+  { unique: true, sparse: true },
+);
 PaymentSchema.index({ status: 1 });
 PaymentSchema.index({ bookingId: 1 });

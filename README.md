@@ -1,76 +1,87 @@
-# TicketMax API
+# TicketMax API 🎫
 
-A comprehensive event ticketing platform built with NestJS, featuring advanced security, caching, and real-time
-capabilities.
+A comprehensive event ticketing platform built with NestJS, featuring advanced security, AI-powered customer support, dual payment gateway integration, and real-time capabilities.
 
 ![NestJS](https://img.shields.io/badge/nestjs-%23E0234E.svg?style=for-the-badge&logo=nestjs&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 ![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
+![Socket.IO](https://img.shields.io/badge/Socket.io-black?style=for-the-badge&logo=socket.io&badgeColor=010101)
+![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens)
 
 ## 🚀 Features
 
-### Core Functionality
-
+### 🎯 Core Functionality
 - **Event Management** - Create, update, and manage events with categories, pricing, and scheduling
-- **User Authentication** - Secure JWT-based authentication with role-based access control
-- **Booking System** - Complete ticket booking and management system
-- **Organizer Onboarding** - Multi-step verification process for event organizers
-- **Payment Integration** - Secure payment processing and transaction management
+- **Advanced Booking System** - Complete ticket booking with guest support and user management
+- **Dual Payment Gateway** - Integrated Paystack and Flutterwave payment processing
+- **Organizer Onboarding** - Multi-step verification process with document upload
 - **Admin Dashboard** - Comprehensive administrative controls and analytics
+- **OAuth Integration** - Single Sign-On with Google, GitHub, Facebook, and Apple
 
-### Security & Performance
+### 🤖 AI-Powered Customer Support
+- **Custom AI Agent** - Built-in intelligent assistant (no API costs required)
+- **Intent Classification** - Automatic categorization of user queries
+- **Coding Assistance** - Help with JavaScript/TypeScript, React, NestJS, and more
+- **Contextual Responses** - Personalized replies based on conversation history
+- **Multi-Language Support** - Programming help across various frameworks
+- **Fallback to Claude API** - Optional external AI with graceful degradation
 
+### 🔒 Security & Performance
 - **Rate Limiting** - Multi-tier throttling protection against abuse
 - **Brute Force Protection** - Advanced authentication security with IP blocking
-- **Caching System** - Intelligent in-memory caching for improved performance
-- **Security Headers** - Comprehensive HTTP security headers
+- **Intelligent Caching** - Redis-powered caching with invalidation strategies
+- **Security Headers** - Comprehensive HTTP security configuration
 - **Input Validation** - Strict validation using class-validator and DTOs
+- **Session Management** - Secure JWT with refresh token support
 
-### Communication
+### 📱 Communication & Real-time
+- **Email Notifications** - Automated email system with templates
+- **SMS Integration** - Twilio-powered notifications
+- **WebSocket Support** - Real-time chat and notifications
+- **Event Broadcasting** - Live updates for bookings and events
 
-- **Email Notifications** - Automated email system for bookings and updates
-- **SMS Integration** - Twilio-powered SMS notifications
-- **Real-time Updates** - Event and booking status notifications
+### 💾 Data Management
+- **MongoDB Integration** - Scalable NoSQL database with Mongoose ODM
+- **Cloud Storage** - Cloudinary integration for media management
+- **Background Jobs** - Automated cleanup and maintenance tasks
+- **Cron Scheduling** - Automated booking cleanup and notifications
 
 ## 📋 Table of Contents
 
-- [Quick Start](#quick-start)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [API Documentation](#api-documentation)
-- [Architecture](#architecture)
-- [Security Features](#security-features)
-- [Performance Optimization](#performance-optimization)
-- [Development](#development)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
+- [🚀 Quick Start](#quick-start)
+- [🛠 Installation](#installation)
+- [⚙️ Configuration](#configuration)
+- [🤖 AI Chat System](#ai-chat-system)
+- [💳 Payment Integration](#payment-integration)
+- [📡 API Documentation](#api-documentation)
+- [🏗️ Architecture](#architecture)
+- [🔒 Security Features](#security-features)
+- [⚡ Performance Optimization](#performance-optimization)
+- [🧪 Testing](#testing)
+- [🚀 Deployment](#deployment)
+- [📚 Documentation](#documentation)
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-
 - **Node.js** (v18+ recommended)
 - **MongoDB** (v5.0+)
 - **Redis** (optional, for advanced caching)
 - **npm** or **yarn**
 
 ### 1. Clone the Repository
-
 ```bash
 git clone <repository-url>
 cd ticketmax.api
 ```
 
 ### 2. Install Dependencies
-
 ```bash
 npm install
 ```
 
 ### 3. Environment Setup
-
 ```bash
 # Copy environment template
 cp .env.example .env
@@ -79,8 +90,31 @@ cp .env.example .env
 nano .env
 ```
 
-### 4. Start Services
+**Essential Environment Variables:**
+```env
+# Database
+MONGODB_URI=mongodb://localhost:27017/ticketmax
 
+# JWT
+JWT_SECRET=your-secret-key
+
+# Payment Gateways
+PAYSTACK_SECRET_KEY=sk_test_your_paystack_key
+FLUTTERWAVE_SECRET_KEY=FLWSECK_TEST-your-flutterwave-key
+
+# AI Configuration (Optional)
+CLAUDE_API_KEY=your-claude-api-key-here
+
+# Frontend
+FRONTEND_URL=http://localhost:3000
+
+# Email
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+```
+
+### 4. Start Services
 ```bash
 # Start MongoDB (if running locally)
 mongod
@@ -88,35 +122,37 @@ mongod
 # Start Redis (optional)
 redis-server
 
-# Start the application
+# Start the application in development mode
 npm run start:dev
 ```
 
 ### 5. Access the API
-
-- **API Base URL**: `http://localhost:3000`
-- **Swagger Documentation**: `http://localhost:3000/api`
-- **Health Check**: `http://localhost:3000/health`
+- **API Base URL**: `http://localhost:3500`
+- **Swagger Documentation**: `http://localhost:3500/api`
+- **Health Check**: `http://localhost:3500/health`
+- **AI Chat WebSocket**: `ws://localhost:3500/chat`
 
 ## 🛠 Installation
 
 ### Development Setup
-
 ```bash
 # Install dependencies
 npm install
 
-# Install development tools
+# Install development tools globally
 npm install -g @nestjs/cli
 
-# Generate NestJS resources (optional)
-nest generate module feature-name
-nest generate controller feature-name
-nest generate service feature-name
+# Start in development mode with hot reload
+npm run start:dev
+
+# Run linting
+npm run lint
+
+# Run tests
+npm run test
 ```
 
 ### Database Setup
-
 ```bash
 # MongoDB with Docker
 docker run -d \
@@ -126,1088 +162,521 @@ docker run -d \
   -e MONGO_INITDB_ROOT_PASSWORD=password \
   mongo:latest
 
-# Redis with Docker (optional)
+# Redis with Docker (recommended for production)
 docker run -d \
   --name ticketmax-redis \
   -p 6379:6379 \
   redis:alpine
 ```
 
-### Production Setup
-
+### Docker Compose Setup
 ```bash
-# Build the application
-npm run build
+# Start all services
+docker-compose up -d
 
-# Start in production mode
-npm run start:prod
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
 ```
 
 ## ⚙️ Configuration
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
-
+#### Core Configuration
 ```env
 # Application
+PORT=3500
 NODE_ENV=development
-PORT=3000
-API_PREFIX=api
 
 # Database
 MONGODB_URI=mongodb://localhost:27017/ticketmax
-DB_NAME=ticketmax
 
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key
-JWT_EXPIRES_IN=7d
-REFRESH_TOKEN_SECRET=your-refresh-token-secret
-REFRESH_TOKEN_EXPIRES_IN=30d
+# Security
+JWT_SECRET=your-jwt-secret-key
+ENCRYPTION_KEY=your-encryption-key-32-chars
 
-# Email Configuration (Nodemailer)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-EMAIL_FROM=noreply@ticketmax.com
-
-# SMS Configuration (Twilio)
-TWILIO_ACCOUNT_SID=your-twilio-account-sid
-TWILIO_AUTH_TOKEN=your-twilio-auth-token
-TWILIO_PHONE_NUMBER=+1234567890
-
-# Redis Configuration (Optional)
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
-
-# Rate Limiting
-THROTTLE_TTL_SHORT=1000
-THROTTLE_LIMIT_SHORT=10
-THROTTLE_TTL_MEDIUM=10000
-THROTTLE_LIMIT_MEDIUM=50
-THROTTLE_TTL_LONG=60000
-THROTTLE_LIMIT_LONG=100
-
-# Authentication Rate Limiting (Brute Force Protection)
-AUTH_THROTTLE_TTL=60000
-AUTH_THROTTLE_LIMIT=5
-SENSITIVE_THROTTLE_TTL=300000
-SENSITIVE_THROTTLE_LIMIT=3
-
-# Cache Configuration
-CACHE_TTL_SHORT=60
-CACHE_TTL_MEDIUM=300
-CACHE_TTL_LONG=900
-CACHE_TTL_VERY_LONG=3600
-
-# File Upload
-MAX_FILE_SIZE=5242880
-UPLOAD_DEST=./uploads
+# Frontend
+FRONTEND_URL=http://localhost:3000
+API_URL=http://localhost:3500
 ```
 
-### Configuration Files
+#### Payment Gateways
+```env
+# Paystack
+PAYSTACK_SECRET_KEY=sk_test_your_secret_key_here
+PAYSTACK_PUBLIC_KEY=pk_test_your_public_key_here
+PAYSTACK_WEBHOOK_SECRET=your_webhook_secret_here
 
-- **Email Config**: See `email-config-examples.env`
-- **Organizer Config**: See `organizer-config.env`
-- **Database Config**: `src/configurations/database-config/`
-- **JWT Config**: `src/configurations/jwt_configuration/`
-
-## 📚 API Documentation
-
-### Interactive Documentation
-
-Access the Swagger UI at `http://localhost:3000/api` for interactive API documentation.
-
-### Main Endpoints
-
-#### Authentication
-
-```
-POST /api/user/register        # User registration
-POST /api/user/login           # User login
-POST /api/user/verify-email    # Email verification
-POST /api/user/forgot-password # Password reset request
-POST /api/user/reset-password  # Password reset
+# Flutterwave
+FLUTTERWAVE_PUBLIC_KEY=FLWPUBK_TEST-your-public-key
+FLUTTERWAVE_SECRET_KEY=FLWSECK_TEST-your-secret-key
+FLUTTERWAVE_ENCRYPTION_KEY=FLWSECK_TEST-your-encryption-key
+FLUTTERWAVE_WEBHOOK_SECRET=your_webhook_secret
 ```
 
-#### Events
+#### OAuth Providers
+```env
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3500/auth/google/callback
 
-```
-GET    /api/events             # List all events
-POST   /api/events             # Create new event
-GET    /api/events/featured    # Get featured events
-GET    /api/events/category/:category # Events by category
-GET    /api/events/:id         # Get event details
-PATCH  /api/events/:id         # Update event
-DELETE /api/events/:id         # Delete event
-```
+# GitHub OAuth
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
 
-#### Bookings
+# Facebook OAuth
+FACEBOOK_APP_ID=your-facebook-app-id
+FACEBOOK_APP_SECRET=your-facebook-app-secret
 
-```
-GET    /api/bookings           # User booking history
-POST   /api/bookings           # Create new booking
-GET    /api/bookings/:id       # Get booking details
-POST   /api/bookings/:id/confirm # Confirm booking
-DELETE /api/bookings/:id       # Cancel booking
-```
-
-#### Organizers
-
-```
-POST /api/organizer/onboarding/start    # Start organizer registration
-GET  /api/organizer/onboarding/:id/status # Check onboarding status
-POST /api/organizer/admin/:id/approve   # Admin approve organizer
+# Apple OAuth
+APPLE_CLIENT_ID=your-apple-service-id
+APPLE_TEAM_ID=your-apple-team-id
+APPLE_KEY_ID=your-apple-key-id
+APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour key here\n-----END PRIVATE KEY-----"
 ```
 
-### Rate Limiting
+#### AI Configuration
+```env
+# Claude API (Optional - Custom AI works without this)
+CLAUDE_API_KEY=your_claude_api_key_here
 
-All endpoints are protected with rate limiting:
+# Application Settings
+SCHEDULER_ENABLED=true
+BOOKING_TIMEOUT_MINUTES=10
+```
 
-- **Authentication endpoints**: 5 requests per minute
-- **GET endpoints**: 10 requests per second
-- **POST/PATCH endpoints**: 50 requests per 10 seconds
-- **Sensitive operations**: 3 requests per 5 minutes
+## 🤖 AI Chat System
 
-### Response Format
+The TicketMax API includes a sophisticated AI-powered customer support system with dual-agent architecture:
 
-```json
+### Custom AI Agent (Primary)
+- **Zero Cost**: Operates without external API dependencies
+- **Intent Recognition**: Advanced NLP for query classification
+- **Coding Assistance**: Support for JavaScript, TypeScript, React, NestJS, MongoDB
+- **Context Awareness**: Maintains conversation history and user preferences
+- **Knowledge Base**: Pre-loaded with TicketMax-specific information
+
+### Claude API Integration (Fallback)
+- **Professional Backup**: Falls back to Claude when needed
+- **Seamless Transition**: Transparent switching between agents
+- **API Key Required**: Optional for enhanced capabilities
+
+### AI Features
+```typescript
+// Intent Classification
 {
-  "success": true,
-  "data": {
-    // Response data
-  },
-  "message": "Success message",
-  "timestamp": "2025-07-21T22:00:00.000Z"
+  "intent": "booking_inquiry",
+  "confidence": 0.89,
+  "entities": ["event", "tickets"],
+  "category": "booking"
+}
+
+// Coding Help Example
+User: "How do I create an async function in JavaScript?"
+AI: "Here's a JavaScript example for async function with error handling:
+
+```javascript
+async function fetchUserData(userId) {
+  try {
+    const response = await fetch(`/api/users/${userId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch user data:', error);
+    throw error;
+  }
 }
 ```
 
-## 🏗 Architecture
-
-### Project Structure
-
-```
-src/
-├── configurations/          # Global configurations
-│   ├── cache-config/       # Caching setup
-│   ├── database-config/    # Database configuration
-│   ├── jwt_configuration/  # JWT auth setup
-│   ├── security/           # Security middleware
-│   └── throttler-config/   # Rate limiting setup
-├── enums/                  # TypeScript enums
-├── interfaces/             # TypeScript interfaces
-├── middleware/             # Custom middleware
-│   ├── email-send/         # Email service
-│   ├── notification/       # Notification service
-│   └── sms-send/          # SMS service
-├── modules/                # Feature modules
-│   ├── user/              # User management
-│   ├── event/             # Event management
-│   ├── booking/           # Booking system
-│   ├── organizer/         # Organizer onboarding
-│   ├── payment/           # Payment processing
-│   ├── dashboard/         # Admin dashboard
-│   └── admin-seed/        # Database seeding
-└── shared-entities.ts      # Shared database entities
+**Explanation:** This async function fetches user data with proper error handling and HTTP status checking."
 ```
 
-### Technology Stack
+### WebSocket Chat Integration
+```javascript
+// Connect to chat
+const socket = io('ws://localhost:3500/chat');
 
-- **Framework**: NestJS (Node.js)
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT with Passport
-- **Caching**: In-memory (Redis optional)
-- **Validation**: class-validator, class-transformer
-- **Documentation**: Swagger/OpenAPI
-- **Testing**: Jest
-- **Email**: Nodemailer
-- **SMS**: Twilio
-- **File Upload**: Multer
+// Send message
+socket.emit('sendMessage', {
+  sessionId: 'user-session-id',
+  content: 'I need help with booking tickets',
+  sender: 'user'
+});
 
-### Design Patterns
-
-- **Module-based Architecture** - Feature-based module organization
-- **Repository Pattern** - Data access abstraction
-- **Decorator Pattern** - Custom decorators for caching, throttling
-- **Guard Pattern** - Authentication and authorization guards
-- **Interceptor Pattern** - Request/response transformation
-- **Strategy Pattern** - Multiple authentication strategies
-
-## 🔒 Security Features
-
-### Authentication & Authorization
-
-- **JWT Tokens** - Secure token-based authentication
-- **Role-Based Access Control** - Admin, Organizer, User roles
-- **Refresh Tokens** - Secure token refresh mechanism
-- **Email Verification** - Required email verification for new users
-
-### Brute Force Protection
-
-- **Rate Limiting** - Configurable request limits per endpoint
-- **IP Blocking** - Automatic blocking of suspicious IPs
-- **Progressive Penalties** - Increasing delays for repeated violations
-- **User Agent Detection** - Bot and scraper detection
-
-### Data Protection
-
-- **Input Validation** - Comprehensive request validation
-- **SQL Injection Prevention** - NoSQL injection protection
-- **XSS Protection** - Cross-site scripting prevention
-- **CSRF Protection** - Cross-site request forgery protection
-- **Security Headers** - Comprehensive HTTP security headers
-
-### Security Headers Applied
-
-```
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-X-XSS-Protection: 1; mode=block
-Referrer-Policy: strict-origin-when-cross-origin
-Permissions-Policy: camera=(), microphone=(), geolocation=()
+// Receive AI response
+socket.on('aiResponse', (data) => {
+  console.log('AI Response:', data.content);
+  console.log('Suggestions:', data.suggestions);
+});
 ```
 
-## ⚡ Performance Optimization
+## 💳 Payment Integration
 
-### Caching Strategy
+### Dual Gateway Support
+The API supports both Paystack and Flutterwave payment gateways with automatic failover:
 
-- **In-Memory Caching** - Fast access to frequently requested data
-- **Tiered TTL Strategy** - Different cache durations for different data types
-- **Smart Cache Keys** - Request-parameter-aware cache invalidation
-- **Automatic Cache Management** - TTL-based expiration
+#### Payment Flow
+1. **Initiate Payment**: Client requests payment initialization
+2. **Gateway Selection**: System selects optimal gateway
+3. **Payment Processing**: Secure transaction handling
+4. **Webhook Verification**: Real-time payment status updates
+5. **Booking Confirmation**: Automatic ticket generation
 
-### Cache TTL Levels
-
-- **Short (60s)**: User profiles, recent bookings
-- **Medium (5min)**: Event details, statistics
-- **Long (15min)**: Featured events, categories
-- **Very Long (1hr)**: Static content, configurations
-
-### Database Optimization
-
-- **Mongoose ODM** - Efficient MongoDB object modeling
-- **Query Optimization** - Indexed fields and optimized queries
-- **Population Control** - Selective field population
-- **Aggregation Pipelines** - Complex data processing
-
-### Response Optimization
-
-- **Compression** - Gzip response compression
-- **Pagination** - Efficient data pagination
-- **Field Selection** - Selective field responses
-- **Parallel Processing** - Concurrent operation handling
-
-## 🧪 Development
-
-### Available Scripts
-
+#### API Endpoints
 ```bash
-# Development
-npm run start:dev          # Start in watch mode
-npm run start:debug        # Start with debugging
-npm run start:prod         # Start in production mode
-
-# Building
-npm run build              # Build the application
-npm run build:webpack      # Build with webpack
-
-# Code Quality
-npm run lint               # Run ESLint
-npm run lint:fix           # Fix ESLint issues
-npm run format             # Format code with Prettier
-
-# Testing
-npm run test               # Run unit tests
-npm run test:watch         # Run tests in watch mode
-npm run test:cov           # Run tests with coverage
-npm run test:e2e           # Run end-to-end tests
-```
-
-### Code Generation
-
-```bash
-# Generate a new module
-nest g module feature-name
-
-# Generate a controller
-nest g controller feature-name
-
-# Generate a service
-nest g service feature-name
-
-# Generate a complete resource
-nest g resource feature-name
-```
-
-### Database Operations
-
-```bash
-# Seed initial data
-curl -X POST http://localhost:3000/api/admin-seed/create-admin
-
-# View database collections
-mongosh ticketmax --eval "show collections"
-```
-
-## 🧪 Testing
-
-### Unit Testing
-
-```bash
-# Run all unit tests
-npm run test
-
-# Run specific test file
-npm run test -- user.service.spec.ts
-
-# Run tests with coverage
-npm run test:cov
-```
-
-### End-to-End Testing
-
-```bash
-# Run e2e tests
-npm run test:e2e
-
-# Run e2e tests with specific config
-npm run test:e2e -- --config=test/jest-e2e.json
-```
-
-### Testing Structure
-
-```
-test/
-├── app.e2e-spec.ts        # Application e2e tests
-├── jest-e2e.json          # E2E test configuration
-└── fixtures/               # Test data fixtures
-```
-
-### Mock Services
-
-The application includes comprehensive mocking for:
-
-- Database operations
-- External API calls
-- Email and SMS services
-- File upload operations
-
-## 🚀 Deployment
-
-### Docker Deployment
-
-```dockerfile
-# Dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY . .
-RUN npm run build
-
-EXPOSE 3000
-
-CMD ["npm", "run", "start:prod"]
-```
-
-```yaml
-# docker-compose.yml
-version: '3.8'
-
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - MONGODB_URI=mongodb://mongo:27017/ticketmax
-    depends_on:
-      - mongo
-      - redis
-
-  mongo:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-
-volumes:
-  mongo_data:
-```
-
-### Environment-Specific Deployments
-
-#### Development
-
-```bash
-npm run start:dev
-```
-
-#### Staging
-
-```bash
-NODE_ENV=staging npm run start:prod
-```
-
-#### Production
-
-```bash
-NODE_ENV=production npm run start:prod
-```
-
-### Health Checks
-
-The application includes health check endpoints:
-
-```bash
-# Application health
-GET /health
-
-# Database health
-GET /health/database
-
-# External services health
-GET /health/services
-```
-
-### Monitoring
-
-- **Application Logs** - Structured logging with Winston
-- **Performance Metrics** - Response time monitoring
-- **Error Tracking** - Comprehensive error logging
-- **Rate Limit Monitoring** - Throttling statistics
-
-### Cloud Deployment
-
-#### Vercel
-
-```json
+# Initialize Payment
+POST /payment/initialize
 {
-  "version": 2,
-  "builds": [
+  "amount": 5000,
+  "email": "user@example.com",
+  "bookingId": "booking-id",
+  "gateway": "paystack" // or "flutterwave"
+}
+
+# Verify Payment
+GET /payment/verify/:reference
+
+# Webhook Handler
+POST /payment/webhook/paystack
+POST /payment/webhook/flutterwave
+```
+
+## 📡 API Documentation
+
+### Core Endpoints
+
+#### Authentication
+```bash
+# Register User
+POST /auth/register
+{
+  "email": "user@example.com",
+  "password": "securePassword123",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+# Login
+POST /auth/login
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+
+# OAuth Login
+GET /auth/google
+GET /auth/github
+GET /auth/facebook
+GET /auth/apple
+```
+
+#### Events
+```bash
+# Get All Events
+GET /events?page=1&limit=10&category=concert
+
+# Get Event Details
+GET /events/:id
+
+# Create Event (Organizer only)
+POST /events
+{
+  "title": "Summer Concert",
+  "description": "Amazing summer concert",
+  "date": "2024-07-15T19:00:00.000Z",
+  "venue": "Central Park",
+  "category": "concert",
+  "ticketTypes": [
     {
-      "src": "src/main.ts",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "src/main.ts"
+      "name": "General Admission",
+      "price": 5000,
+      "quantity": 100
     }
   ]
 }
 ```
 
-#### Heroku
-
-```json
+#### Bookings
+```bash
+# Create Booking
+POST /bookings
 {
-  "scripts": {
-    "heroku-postbuild": "npm run build"
+  "eventId": "event-id",
+  "ticketTypeId": "ticket-type-id",
+  "quantity": 2,
+  "userDetails": {
+    "email": "guest@example.com",
+    "firstName": "Jane",
+    "lastName": "Smith"
   }
 }
+
+# Get User Bookings
+GET /bookings/my-bookings
+
+# Get Booking Details
+GET /bookings/:id
 ```
 
-## 🔧 Configuration Examples
+#### AI Chat
+```bash
+# Create Chat Session
+POST /ai-chat/sessions
+{
+  "userId": "user-id"
+}
 
-### Email Configuration
+# Send Message
+POST /ai-chat/sessions/:sessionId/messages
+{
+  "content": "I need help booking tickets",
+  "sender": "user"
+}
 
-```env
-# Gmail SMTP
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-
-# SendGrid
-EMAIL_HOST=smtp.sendgrid.net
-EMAIL_PORT=587
-EMAIL_USER=apikey
-EMAIL_PASS=your-sendgrid-api-key
+# Get Chat History
+GET /ai-chat/sessions/:sessionId/messages?page=1&limit=50
 ```
 
-### SMS Configuration
+### Swagger Documentation
+Access comprehensive API documentation at `/api` when the server is running.
 
-```env
-# Twilio
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=your-auth-token
-TWILIO_PHONE_NUMBER=+1234567890
+## 🏗️ Architecture
+
+### Project Structure
+```
+src/
+├── configurations/           # App configuration
+│   ├── cache-config/        # Redis caching setup
+│   ├── database-config/     # MongoDB configuration
+│   └── jwt_configuration/   # JWT security config
+├── modules/                 # Feature modules
+│   ├── auth/               # Authentication & OAuth
+│   ├── user/               # User management
+│   ├── event/              # Event management
+│   ├── booking/            # Booking system
+│   ├── payment/            # Payment processing
+│   ├── dashboard/          # Admin dashboard
+│   ├── organizer/          # Organizer management
+│   ├── ai-chat/            # AI chat system
+│   │   ├── AiAgent/        # Custom AI implementation
+│   │   │   ├── core/       # AI engine
+│   │   │   ├── knowledge/  # Knowledge base
+│   │   │   ├── nlp/        # NLP processing
+│   │   │   ├── utils/      # AI utilities
+│   │   │   └── interfaces/ # Type definitions
+│   │   └── claude.service.ts # Claude API integration
+│   └── notification/       # Email/SMS notifications
+├── shared/                 # Shared utilities
+├── guards/                 # Route guards
+├── interceptors/          # Request interceptors
+└── main.ts               # Application entry point
 ```
 
-### Database Configuration
+### Design Patterns
+- **Module Pattern**: Feature-based module organization
+- **Repository Pattern**: Data access abstraction
+- **Strategy Pattern**: Payment gateway selection
+- **Observer Pattern**: Event-driven notifications
+- **Singleton Pattern**: Service instances
+- **Factory Pattern**: Dynamic service creation
 
-```env
-# Local MongoDB
-MONGODB_URI=mongodb://localhost:27017/ticketmax
+## 🔒 Security Features
 
-# MongoDB Atlas
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/ticketmax
+### Authentication & Authorization
+- **JWT Tokens**: Secure stateless authentication
+- **Refresh Tokens**: Extended session management
+- **Role-Based Access Control**: Fine-grained permissions
+- **OAuth Integration**: Social login support
+- **Session Management**: Secure session handling
 
-# MongoDB with authentication
-MONGODB_URI=mongodb://username:password@localhost:27017/ticketmax?authSource=admin
+### Protection Mechanisms
+- **Rate Limiting**: Request throttling per IP/user
+- **Brute Force Protection**: Login attempt monitoring
+- **CORS Configuration**: Cross-origin request handling
+- **Input Validation**: DTO-based request validation
+- **SQL Injection Prevention**: Parameterized queries
+- **XSS Protection**: Content sanitization
+
+### Monitoring & Logging
+- **Request Logging**: Comprehensive request tracking
+- **Error Logging**: Detailed error reporting
+- **Security Events**: Authentication attempt logging
+- **Performance Metrics**: Response time monitoring
+
+For detailed security implementation, see [docs/CACHING_AND_SECURITY.md](docs/CACHING_AND_SECURITY.md)
+
+## ⚡ Performance Optimization
+
+### Caching Strategy
+- **Redis Integration**: Distributed caching
+- **Intelligent Invalidation**: Smart cache management
+- **Multi-tier Caching**: Application and database level
+- **Session Caching**: User session optimization
+
+### Database Optimization
+- **MongoDB Indexing**: Optimized query performance
+- **Connection Pooling**: Efficient connection management
+- **Aggregation Pipelines**: Complex query optimization
+- **Document Validation**: Schema enforcement
+
+### Background Processing
+- **Cron Jobs**: Scheduled task execution
+- **Event Cleanup**: Automated maintenance
+- **Email Queuing**: Asynchronous email processing
+- **Booking Management**: Automated booking lifecycle
+
+For detailed performance configuration, see [docs/BACKGROUND_SERVICES_DOCUMENTATION.md](docs/BACKGROUND_SERVICES_DOCUMENTATION.md)
+
+## 🧪 Testing
+
+### Test Setup
+```bash
+# Run all tests
+npm run test
+
+# Run tests with coverage
+npm run test:cov
+
+# Run e2e tests
+npm run test:e2e
+
+# Run tests in watch mode
+npm run test:watch
 ```
 
-## 📊 Performance Benchmarks
+### Testing Strategy
+- **Unit Tests**: Individual component testing
+- **Integration Tests**: Module interaction testing
+- **E2E Tests**: Complete workflow testing
+- **API Testing**: Endpoint functionality testing
 
-### Response Times (Average)
+### Test Configuration
+See [TESTING_GUIDE.md](TESTING_GUIDE.md) for comprehensive testing instructions.
 
-- **Authentication**: ~200ms
-- **Event Listing**: ~150ms (cached: ~50ms)
-- **Event Details**: ~100ms (cached: ~30ms)
-- **Booking Creation**: ~300ms
-- **Search Operations**: ~250ms
+## 🚀 Deployment
 
-### Throughput
+### Production Build
+```bash
+# Build the application
+npm run build
 
-- **Concurrent Users**: 1000+
-- **Requests per Second**: 500+
-- **Database Connections**: 100 (pooled)
+# Start production server
+npm run start:prod
+```
 
-### Cache Hit Rates
+### Docker Deployment
+```bash
+# Build Docker image
+docker build -t ticketmax-api .
 
-- **Event Data**: ~85%
-- **User Profiles**: ~70%
-- **Static Content**: ~95%
+# Run container
+docker run -p 3500:3500 --env-file .env ticketmax-api
+
+# Using Docker Compose
+docker-compose -f docker-compose.production.yml up -d
+```
+
+### Environment Setup
+- **Production Environment**: Secure configuration
+- **SSL/TLS**: HTTPS enforcement
+- **Load Balancing**: Horizontal scaling
+- **Monitoring**: Application health checks
+
+### Deployment Checklist
+- [ ] Environment variables configured
+- [ ] Database connections secured
+- [ ] SSL certificates installed
+- [ ] Payment gateway webhooks configured
+- [ ] Email service configured
+- [ ] Redis cache operational
+- [ ] Monitoring systems active
+
+## 📚 Documentation
+
+### Available Documentation
+- [📊 **Dashboard Service**](docs/DASHBOARD_SERVICE_DOCUMENTATION.md) - Admin dashboard features
+- [💳 **Payment Gateway Integration**](docs/PAYMENT_GATEWAY_INTEGRATION.md) - Payment processing setup
+- [🔒 **Caching & Security**](docs/CACHING_AND_SECURITY.md) - Security implementation details
+- [☁️ **Cloud Storage Setup**](docs/CLOUD_STORAGE_SETUP.md) - File upload configuration
+- [⏰ **Cron Jobs**](docs/CRON_JOBS_DOCUMENTATION.md) - Scheduled task management
+- [🔄 **Background Services**](docs/BACKGROUND_SERVICES_DOCUMENTATION.md) - Background processing
+- [📋 **Entity Relationships**](docs/entity-relationships.md) - Database schema documentation
+
+### API Examples
+The `/docs` folder contains comprehensive examples and implementation guides for all major features.
 
 ## 🤝 Contributing
 
 ### Development Workflow
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Add tests for new functionality
+5. Run the test suite (`npm run test`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
 
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Make your changes**
-4. **Add tests**
-5. **Run the test suite**
-   ```bash
-   npm run test
-   npm run test:e2e
-   npm run lint
-   ```
-6. **Commit your changes**
-   ```bash
-   git commit -m 'feat: add amazing feature'
-   ```
-7. **Push to the branch**
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-8. **Open a Pull Request**
+### Code Standards
+- **TypeScript**: Strict type checking enabled
+- **ESLint**: Code quality enforcement
+- **Prettier**: Code formatting
+- **Conventional Commits**: Commit message standards
 
-### Coding Standards
+### Testing Requirements
+- All new features must include unit tests
+- Integration tests for API endpoints
+- Minimum 80% test coverage required
 
-- **TypeScript** - Strict type checking enabled
-- **ESLint** - Code linting with custom rules
-- **Prettier** - Code formatting
-- **Conventional Commits** - Commit message format
-- **Jest** - Testing framework
-
-### Code Review Guidelines
-
-- All changes require review
-- Tests must pass
-- Code coverage must be maintained
-- Documentation must be updated
-- Security implications must be considered
-
-## 📄 License
+## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📞 Support
+## 🆘 Support
 
-### Documentation
-
-- **API Docs**: Available at `/api` endpoint
-- **Architecture Docs**: See `docs/` directory
-- **Entity Relationships**: See `docs/entity-relationships.md`
-
-### Contact
-
-- **Email**: support@ticketmax.com
-- **Issues**: GitHub Issues
-- **Discussions**: GitHub Discussions
+### Getting Help
+- **Documentation**: Check the `/docs` folder for detailed guides
+- **Issues**: Report bugs and feature requests via GitHub Issues
+- **Community**: Join our community discussions
 
 ### Troubleshooting
-
-#### Common Issues
-
-1. **MongoDB Connection Issues**
-   ```bash
-   # Check MongoDB status
-   systemctl status mongod
-   
-   # Restart MongoDB
-   systemctl restart mongod
-   ```
-
-2. **Redis Connection Issues**
-   ```bash
-   # Check Redis status
-   redis-cli ping
-   
-   # Start Redis
-   redis-server
-   ```
-
-3. **Port Already in Use**
-   ```bash
-   # Find process using port 3000
-   lsof -i :3000
-   
-   # Kill the process
-   kill -9 <PID>
-   ```
-
-4. **JWT Token Issues**
-    - Verify JWT_SECRET is set
-    - Check token expiration settings
-    - Ensure proper token format
-
-5. **Email/SMS Not Working**
-    - Verify service credentials
-    - Check network connectivity
-    - Review service-specific documentation
-
-### FAQ
-
-**Q: How do I add a new feature module?**
-A: Use the NestJS CLI: `nest g resource feature-name`
-
-**Q: How do I configure Redis for production?**
-A: Update the cache configuration to use Redis store instead of in-memory storage.
-
-**Q: How do I add new rate limiting rules?**
-A: Modify the throttler configuration and add custom decorators.
-
-**Q: How do I customize email templates?**
-A: Templates are in the email service. Modify the HTML templates there.
-
-**Q: How do I add new user roles?**
-A: Update the `UserRole` enum and add corresponding guards.
-
-## 🐳 Docker & Containerization
-
-### Docker Setup
-
-The application includes a robust multi-stage Dockerfile optimized for both development and production environments.
-
-#### Quick Start with Docker
-
-```bash
-# Clone and navigate to project
-git clone <repository-url>
-cd ticketmax.api
-
-# Start with Docker Compose (Production)
-docker-compose up -d
-
-# Start with Docker Compose (Development)
-docker-compose --profile dev up -d
-
-# Access the application
-curl http://localhost:3000/health
-```
-
-#### Docker Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Nginx Proxy   │────│  TicketMax API   │────│   MongoDB       │
-│   (Port 80)     │    │   (Port 3000)    │    │   (Port 27017)  │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                 │
-                       ┌──────────────────┐
-                       │     Redis        │
-                       │   (Port 6379)    │
-                       └──────────────────┘
-```
-
-### Multi-Stage Dockerfile
-
-Our Dockerfile uses multi-stage builds for optimization:
-
-- **Base Stage**: Common setup with security configurations
-- **Development Stage**: Includes dev dependencies and hot reload
-- **Build Stage**: Compiles TypeScript and optimizes for production
-- **Production Stage**: Minimal runtime image with security hardening
-
-#### Key Features
-
-- **Security Hardening**: Non-root user, minimal attack surface
-- **Health Checks**: Built-in container health monitoring
-- **Signal Handling**: Proper shutdown with dumb-init
-- **Layer Optimization**: Efficient caching and minimal image size
-- **Development Support**: Separate development target with hot reload
-
-### Docker Compose Services
-
-#### Production Stack (`docker-compose up`)
-
-```yaml
-services:
-  app:        # Main NestJS application
-  mongo:      # MongoDB database with initialization
-  redis:      # Redis cache with persistence
-  nginx:      # Reverse proxy with rate limiting
-```
-
-#### Development Stack (`docker-compose --profile dev up`)
-
-```yaml
-services:
-  app-dev:    # Development app with hot reload
-  mongo:      # MongoDB database
-  redis:      # Redis cache
-```
-
-### Container Configuration
-
-#### Environment Variables
-
-```bash
-# Copy Docker environment template
-cp .env.docker .env
-
-# Edit configuration for your environment
-nano .env
-```
-
-#### Key Configuration Options
-
-```env
-# Application
-NODE_ENV=production
-PORT=3000
-
-# Database (Auto-configured for Docker Compose)
-MONGODB_URI=mongodb://ticketmax:ticketmax123@mongo:27017/ticketmax
-
-# Cache (Auto-configured for Docker Compose)
-REDIS_HOST=redis
-REDIS_PORT=6379
-
-# External Services (Configure these)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_USER=your-email@gmail.com
-TWILIO_ACCOUNT_SID=your-twilio-sid
-```
-
-### Development with Docker
-
-#### Hot Reload Development
-
-```bash
-# Start development environment
-docker-compose --profile dev up -d
-
-# View logs
-docker-compose logs -f app-dev
-
-# Execute commands in container
-docker-compose exec app-dev npm run test
-docker-compose exec app-dev npm run lint
-```
-
-#### Development Features
-
-- **Volume Mounting**: Source code mounted for instant changes
-- **Port Mapping**: Application available on `http://localhost:3001`
-- **Debug Support**: Development tools and debugging enabled
-- **Database Persistence**: Data persists between container restarts
-
-### Production Deployment
-
-#### Single Command Deployment
-
-```bash
-# Start production stack
-docker-compose up -d
-
-# Scale application instances
-docker-compose up -d --scale app=3
-
-# View production logs
-docker-compose logs -f app
-```
-
-#### Production Features
-
-- **Nginx Reverse Proxy**: Load balancing and SSL termination
-- **Rate Limiting**: Built-in protection against abuse
-- **Health Monitoring**: Automatic container restart on failure
-- **Data Persistence**: MongoDB and Redis data volumes
-- **Security Headers**: Comprehensive HTTP security
-
-### Container Management
-
-#### Useful Commands
-
-```bash
-# View running containers
-docker-compose ps
-
-# Check container health
-docker-compose exec app curl http://localhost:3000/health
-
-# View application logs
-docker-compose logs -f app
-
-# Update containers
-docker-compose pull
-docker-compose up -d
-
-# Clean up
-docker-compose down
-docker-compose down -v  # Remove volumes too
-```
-
-#### Monitoring & Debugging
-
-```bash
-# Monitor resource usage
-docker stats
-
-# Access container shell
-docker-compose exec app sh
-docker-compose exec mongo mongosh
-
-# Database operations
-docker-compose exec mongo mongosh ticketmax
-docker-compose exec redis redis-cli
-
-# Backup database
-docker-compose exec mongo mongodump --out /backup
-```
-
-### Security Hardening
-
-#### Container Security Features
-
-- **Non-Root User**: Application runs as user `nestjs` (UID 1001)
-- **Read-Only Root**: Filesystem protection against tampering
-- **Resource Limits**: Memory and CPU constraints
-- **Network Isolation**: Containers communicate via internal network
-- **Secret Management**: Environment-based configuration
-
-#### Network Security
-
-```yaml
-# Custom network configuration
-networks:
-  ticketmax-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-```
-
-#### Volume Security
-
-```yaml
-# Secure volume mounting
-volumes:
-  - ./uploads:/usr/src/app/uploads:rw
-  - mongo_data:/data/db:rw
-  - redis_data:/data:rw
-```
-
-### Performance Optimization
-
-#### Production Optimizations
-
-- **Multi-Stage Build**: Minimal production image (< 200MB)
-- **Layer Caching**: Optimized Docker layer structure
-- **Compression**: Gzip enabled via Nginx
-- **Connection Pooling**: Database connection optimization
-- **Resource Limits**: Defined memory and CPU constraints
-
-#### Scaling Configuration
-
-```bash
-# Horizontal scaling
-docker-compose up -d --scale app=5
-
-# Load balancer configuration
-# Nginx automatically distributes load across instances
-```
-
-### CI/CD Integration
-
-#### GitHub Actions Example
-
-```yaml
-name: Docker Build and Deploy
-
-on:
-  push:
-    branches: [ main ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Build Docker image
-        run: docker build -t ticketmax-api .
-
-      - name: Run tests in container
-        run: |
-          docker run --rm ticketmax-api npm test
-
-      - name: Deploy to production
-        run: docker-compose up -d
-```
-
-#### GitLab CI Example
-
-```yaml
-stages:
-  - build
-  - test
-  - deploy
-
-build:
-  stage: build
-  script:
-    - docker build -t $CI_REGISTRY_IMAGE .
-    - docker push $CI_REGISTRY_IMAGE
-
-deploy:
-  stage: deploy
-  script:
-    - docker-compose pull
-    - docker-compose up -d
-  only:
-    - main
-```
-
-### Troubleshooting Docker
-
-#### Common Issues & Solutions
-
-**Container Won't Start**
-
-```bash
-# Check logs
-docker-compose logs app
-
-# Common issues:
-# - Environment variables missing
-# - Database connection failed
-# - Port already in use
-```
-
-**Database Connection Issues**
-
-```bash
-# Verify MongoDB is running
-docker-compose exec mongo mongosh --eval "db.adminCommand('ping')"
-
-# Check connection string
-docker-compose exec app env | grep MONGODB_URI
-```
-
-**Performance Issues**
-
-```bash
-# Monitor resource usage
-docker stats
-
-# Check container limits
-docker inspect ticketmax-api | grep -A 10 "Resources"
-
-# Optimize with resource limits
-docker-compose up -d --scale app=2
-```
-
-**Network Issues**
-
-```bash
-# Test inter-container connectivity
-docker-compose exec app ping mongo
-docker-compose exec app ping redis
-
-# Check network configuration
-docker network ls
-docker network inspect ticketmax_ticketmax-network
-```
-
-### Cloud Deployment
-
-#### AWS ECS Deployment
-
-```bash
-# Build and push to ECR
-aws ecr get-login-password | docker login --username AWS --password-stdin
-docker build -t ticketmax-api .
-docker tag ticketmax-api:latest your-account.dkr.ecr.region.amazonaws.com/ticketmax-api:latest
-docker push your-account.dkr.ecr.region.amazonaws.com/ticketmax-api:latest
-```
-
-#### Google Cloud Run
-
-```bash
-# Build and deploy
-gcloud builds submit --tag gcr.io/your-project/ticketmax-api
-gcloud run deploy --image gcr.io/your-project/ticketmax-api --platform managed
-```
-
-#### Digital Ocean App Platform
-
-```yaml
-# .do/app.yaml
-name: ticketmax-api
-services:
-  - name: api
-    source_dir: /
-    github:
-      repo: your-org/ticketmax-api
-      branch: main
-    run_command: npm start
-    environment_slug: node-js
-    instance_count: 1
-    instance_size_slug: basic-xxs
-```
-
-### Docker Best Practices
-
-#### Security Best Practices
-
-- ✅ Use non-root users
-- ✅ Scan images for vulnerabilities
-- ✅ Use official base images
-- ✅ Minimize attack surface
-- ✅ Set resource limits
-- ✅ Use secrets management
-
-#### Performance Best Practices
-
-- ✅ Multi-stage builds
-- ✅ Layer optimization
-- ✅ Use .dockerignore
-- ✅ Minimize image size
-- ✅ Cache dependencies
-- ✅ Health checks
+- **Database Connection**: Ensure MongoDB is running and accessible
+- **Environment Variables**: Verify all required variables are set
+- **Port Conflicts**: Check if port 3500 is available
+- **Dependencies**: Ensure all npm packages are properly installed
 
 ---
 
-Built with ❤️ using [NestJS](https://nestjs.com/)
+## 🌟 Key Features Highlight
 
+### 🤖 Revolutionary AI Support
+- **Zero-cost AI agent** with advanced NLP capabilities
+- **Coding assistance** for multiple programming languages
+- **Context-aware conversations** with memory
+- **Fallback to professional AI** services when needed
+
+### 💳 Robust Payment System
+- **Dual gateway support** (Paystack + Flutterwave)
+- **Automatic failover** for payment reliability
+- **Comprehensive webhook handling** for real-time updates
+- **Transaction security** and fraud protection
+
+### 🔐 Enterprise Security
+- **Multi-layer authentication** with OAuth support
+- **Advanced rate limiting** and brute force protection
+- **Comprehensive audit logging** for compliance
+- **Security headers** and input validation
+
+### ⚡ High Performance
+- **Redis caching** with intelligent invalidation
+- **Database optimization** with proper indexing
+- **Background job processing** for scalability
+- **Real-time WebSocket** communication
+
+Built with ❤️ using NestJS, TypeScript, and MongoDB.

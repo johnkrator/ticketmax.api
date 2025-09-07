@@ -4,7 +4,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AiChatController } from './ai-chat.controller';
 import { AiChatService } from './ai-chat.service';
-import { OpenAiService } from './openai.service';
+import { ClaudeService } from './claude.service';
+import { CustomAiService } from './custom-ai.service';
 import { ChatGateway } from './chat.gateway';
 import { ChatSession, ChatSessionSchema } from './entities/chat-session.entity';
 import { ChatMessage, ChatMessageSchema } from './entities/chat-message.entity';
@@ -26,7 +27,7 @@ import { ChatMessage, ChatMessageSchema } from './entities/chat-message.entity';
     ConfigModule,
   ],
   controllers: [AiChatController],
-  providers: [AiChatService, OpenAiService, ChatGateway],
-  exports: [AiChatService, OpenAiService, ChatGateway],
+  providers: [AiChatService, ClaudeService, CustomAiService, ChatGateway],
+  exports: [AiChatService, ClaudeService, CustomAiService, ChatGateway],
 })
 export class AiChatModule {}
